@@ -30,30 +30,10 @@
     </div>
   </div>
 
-  <div class="live-meters">
-    <div class="lm-row" id="lm-row-A">
-      <span class="lm-name" id="lm-name-A">A</span>
-      <div class="lm-track"><div class="lm-fill" id="lm-fill-A" style="background:var(--amber)"></div><div class="lm-thr" id="lm-thr-A"></div></div>
-      <span class="lm-val mono" id="lm-val-A">—</span>
-    </div>
-    <div class="lm-row" id="lm-row-B">
-      <span class="lm-name" id="lm-name-B">B</span>
-      <div class="lm-track"><div class="lm-fill" id="lm-fill-B" style="background:var(--accent)"></div><div class="lm-thr" id="lm-thr-B"></div></div>
-      <span class="lm-val mono" id="lm-val-B">—</span>
-    </div>
-    <div class="lm-row" id="lm-row-C">
-      <span class="lm-name" id="lm-name-C">C</span>
-      <div class="lm-track"><div class="lm-fill" id="lm-fill-C" style="background:#9988ff"></div><div class="lm-thr" id="lm-thr-C"></div></div>
-      <span class="lm-val mono" id="lm-val-C">—</span>
-    </div>
-  </div>
+  <div class="live-meters" id="live-meters"></div>
 
   <div class="live-controls">
-    <div class="band-selector">
-      <button class="band-btn" data-band="A">A</button>
-      <button class="band-btn active" data-band="B">B</button>
-      <button class="band-btn" data-band="C">C</button>
-    </div>
+    <div class="band-selector" id="band-selector"></div>
     <div class="btn-row">
       <button class="btn primary" id="btn-live-start">▶ Avvia</button>
       <button class="btn" id="btn-freeze" disabled>❄ Freeze</button>
@@ -98,9 +78,7 @@
 
     <div id="night-strips-panel" class="night-panel" style="display:none">
       <div class="night-panel-label">Presenza · <span id="n-events">0</span> eventi</div>
-      <div class="presence-strip" id="ps-row-A"><span class="ps-label">A</span><div class="ps-track" id="ps-A"></div></div>
-      <div class="presence-strip" id="ps-row-B"><span class="ps-label">B</span><div class="ps-track" id="ps-B"></div></div>
-      <div class="presence-strip" id="ps-row-C"><span class="ps-label">C</span><div class="ps-track" id="ps-C"></div></div>
+      <div id="ps-rows"></div>
     </div>
 
     <div id="night-now-panel" class="night-panel" style="display:none">
@@ -109,21 +87,7 @@
         <div><span class="now-hz" id="now-hz">—</span><span class="now-hz-unit"> Hz dominante</span></div>
         <div class="now-status-txt" id="now-status">—</div>
       </div>
-      <div class="now-meter" id="nm-row-A">
-        <span class="nm-label">A</span>
-        <div class="nm-track"><div class="nm-fill" id="nm-fill-A" style="background:var(--amber)"></div><div class="nm-thr" id="nm-thr-A"></div></div>
-        <span class="nm-status mono" id="nm-status-A">—</span>
-      </div>
-      <div class="now-meter" id="nm-row-B">
-        <span class="nm-label">B</span>
-        <div class="nm-track"><div class="nm-fill" id="nm-fill-B" style="background:var(--accent)"></div><div class="nm-thr" id="nm-thr-B"></div></div>
-        <span class="nm-status mono" id="nm-status-B">—</span>
-      </div>
-      <div class="now-meter" id="nm-row-C">
-        <span class="nm-label">C</span>
-        <div class="nm-track"><div class="nm-fill" id="nm-fill-C" style="background:#9988ff"></div><div class="nm-thr" id="nm-thr-C"></div></div>
-        <span class="nm-status mono" id="nm-status-C">—</span>
-      </div>
+      <div id="nm-rows"></div>
     </div>
 
     <div class="night-banner">⚡ Telefono in carica, app in primo piano, microfono libero (non appoggiato su superfici morbide).<br>Bloccare lo schermo interrompe la registrazione: usa la schermata nera.</div>
@@ -191,51 +155,8 @@
 
   <div class="sett-block">
     <div class="sett-block-title">Bande di frequenza e soglie</div>
-
-    <div class="band-card" data-b="A">
-      <div class="band-card-head"><div class="band-dot"></div><div class="band-id">A</div><div class="band-head-name">es. 50 Hz rete elettrica</div></div>
-      <div class="band-card-body">
-        <div class="band-param"><span class="band-param-label">Centro</span>
-          <div class="stepper"><button data-step="s-A-center" data-d="-1">−</button><input type="number" id="s-A-center" min="10" max="2000" step="1"><span class="stepper-unit">Hz</span><button data-step="s-A-center" data-d="1">+</button></div></div>
-        <div class="band-param"><span class="band-param-label">Larghezza ±</span>
-          <div class="stepper"><button data-step="s-A-width" data-d="-1">−</button><input type="number" id="s-A-width" min="1" max="200" step="1"><span class="stepper-unit">Hz</span><button data-step="s-A-width" data-d="1">+</button></div></div>
-        <div class="thr-block">
-          <div class="thr-head"><span class="thr-head-label">Soglia trigger</span><span><span class="thr-head-val" id="s-A-thr-val">−55</span><span class="thr-head-unit"> dBFS</span></span></div>
-          <input type="range" id="s-A-thr" class="thr-sl" min="-100" max="-10" step="1">
-          <div class="thr-hints"><span>← più sensibile</span><span>meno sensibile →</span></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="band-card" data-b="B">
-      <div class="band-card-head"><div class="band-dot"></div><div class="band-id">B</div><div class="band-head-name">es. 100 Hz armonica / trasformatori</div></div>
-      <div class="band-card-body">
-        <div class="band-param"><span class="band-param-label">Centro</span>
-          <div class="stepper"><button data-step="s-B-center" data-d="-1">−</button><input type="number" id="s-B-center" min="10" max="2000" step="1"><span class="stepper-unit">Hz</span><button data-step="s-B-center" data-d="1">+</button></div></div>
-        <div class="band-param"><span class="band-param-label">Larghezza ±</span>
-          <div class="stepper"><button data-step="s-B-width" data-d="-1">−</button><input type="number" id="s-B-width" min="1" max="200" step="1"><span class="stepper-unit">Hz</span><button data-step="s-B-width" data-d="1">+</button></div></div>
-        <div class="thr-block">
-          <div class="thr-head"><span class="thr-head-label">Soglia trigger</span><span><span class="thr-head-val" id="s-B-thr-val">−55</span><span class="thr-head-unit"> dBFS</span></span></div>
-          <input type="range" id="s-B-thr" class="thr-sl" min="-100" max="-10" step="1">
-          <div class="thr-hints"><span>← più sensibile</span><span>meno sensibile →</span></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="band-card" id="band-card-C" data-b="C">
-      <div class="band-card-head"><div class="band-dot"></div><div class="band-id">C</div><div class="band-head-name">personalizzata</div><div class="toggle" id="s-C-enabled"></div></div>
-      <div class="band-card-body">
-        <div class="band-param"><span class="band-param-label">Centro</span>
-          <div class="stepper"><button data-step="s-C-center" data-d="-1">−</button><input type="number" id="s-C-center" min="10" max="2000" step="1"><span class="stepper-unit">Hz</span><button data-step="s-C-center" data-d="1">+</button></div></div>
-        <div class="band-param"><span class="band-param-label">Larghezza ±</span>
-          <div class="stepper"><button data-step="s-C-width" data-d="-1">−</button><input type="number" id="s-C-width" min="1" max="200" step="1"><span class="stepper-unit">Hz</span><button data-step="s-C-width" data-d="1">+</button></div></div>
-        <div class="thr-block">
-          <div class="thr-head"><span class="thr-head-label">Soglia trigger</span><span><span class="thr-head-val" id="s-C-thr-val">−55</span><span class="thr-head-unit"> dBFS</span></span></div>
-          <input type="range" id="s-C-thr" class="thr-sl" min="-100" max="-10" step="1">
-          <div class="thr-hints"><span>← più sensibile</span><span>meno sensibile →</span></div>
-        </div>
-      </div>
-    </div>
+    <div id="band-cards"></div>
+    <button class="btn btn-wide dim" id="btn-add-band" style="margin-top:10px">＋ Aggiungi banda</button>
   </div>
 
   <div class="sett-block">

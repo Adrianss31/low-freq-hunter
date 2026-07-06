@@ -2,7 +2,7 @@
 // Alza CACHE_VERSION a ogni deploy per invalidare la cache.
 'use strict';
 
-const CACHE_VERSION = 'lfh-v1';
+const CACHE_VERSION = 'lfh-v2';
 const SHELL = [
   './',
   './index.html',

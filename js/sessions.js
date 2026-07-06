@@ -2,9 +2,9 @@
 // clip audio) ed export CSV / JSON / report PNG.
 'use strict';
 
-import { BAND_COLORS, BAND_KEYS } from './config.js';
+import { bandColor } from './config.js';
 import { dbAll, dbGet, dbBySession, deleteSessionData } from './db.js';
-import { showToast, fmtClock, fmtDate, fmtDur, fmtIso, download, drawWaterfall, setupCanvas } from './ui.js';
+import { showToast, fmtClock, fmtDate, fmtDur, fmtIso, download, drawWaterfall, setupCanvas, sessionBands, sampleLevel } from './ui.js';
 import { renderReportPng } from './report.js';
 
 const $ = id => document.getElementById(id);
@@ -78,8 +78,9 @@ function drawTimeline() {
     ctx.fillText('Nessun campione registrato.', 10, 20);
     return;
   }
+  const bands = sessionBands(session);
   const laneH = 8; // corsie evento in alto, una per banda
-  const plotY0 = laneH * 3 + 6, plotH = H - plotY0 - 14;
+  const plotY0 = laneH * Math.max(bands.length, 1) + 6, plotH = H - plotY0 - 14;
   const tMin = samples[0].t, tMax = samples[samples.length - 1].t;
   const tSpan = Math.max(1, tMax - tMin);
   const dbMin = -110, dbMax = -10;
@@ -93,14 +94,14 @@ function drawTimeline() {
   }
 
   // Corsie evento
-  BAND_KEYS.forEach((k, i) => {
+  bands.forEach((b, i) => {
     const y = i * laneH + 2;
     ctx.fillStyle = 'rgba(255,255,255,.04)';
     ctx.fillRect(0, y, W, laneH - 2);
-    ctx.fillStyle = BAND_COLORS[k];
+    ctx.fillStyle = bandColor(b.id);
     ctx.font = '8px monospace';
-    ctx.fillText(k, 2, y + laneH - 3);
-    for (const ev of events.filter(e => e.band === k)) {
+    ctx.fillText(b.id, 2, y + laneH - 3);
+    for (const ev of events.filter(e => e.band === b.id)) {
       ctx.fillRect(xOf(ev.startT), y, Math.max(xOf(ev.endT) - xOf(ev.startT), 2), laneH - 2);
     }
   });
@@ -116,17 +117,13 @@ function drawTimeline() {
   }
 
   // Linee di soglia (dalla config salvata nella sessione)
-  const sCfg = session.cfg;
-  if (sCfg?.bands) {
-    ctx.setLineDash([3, 4]);
-    for (const k of BAND_KEYS) {
-      if (!sCfg.bands[k]?.enabled) continue;
-      ctx.strokeStyle = BAND_COLORS[k] + '80';
-      const y = yOf(sCfg.bands[k].thr);
-      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
-    }
-    ctx.setLineDash([]);
+  ctx.setLineDash([3, 4]);
+  for (const b of bands) {
+    ctx.strokeStyle = bandColor(b.id) + '80';
+    const y = yOf(b.thr);
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
   }
+  ctx.setLineDash([]);
 
   // Curve di livello: ref (grigia) + bande
   const stride = Math.max(1, Math.floor(samples.length / (W * 1.5)));
@@ -143,10 +140,8 @@ function drawTimeline() {
     ctx.strokeStyle = color; ctx.lineWidth = width; ctx.stroke();
   };
   plotLine(s => s.ref, 'rgba(255,255,255,.22)', 1);
-  const keyOf = { A: 'a', B: 'b', C: 'c' };
-  for (const k of BAND_KEYS) {
-    if (!sCfg?.bands?.[k]?.enabled) continue;
-    plotLine(s => s[keyOf[k]], BAND_COLORS[k], 1.2);
+  for (const b of bands) {
+    plotLine(s => sampleLevel(s, b.id), bandColor(b.id), 1.2);
   }
 
   // Marker: triangolini bianchi
@@ -175,10 +170,7 @@ function drawSessionWf() {
   if (!slices.length) { wrap.style.display = 'none'; return; }
   wrap.style.display = '';
   const { ctx, W, H } = setupCanvas($('detail-wf-canvas'), 110);
-  const guides = [];
-  for (const k of BAND_KEYS) {
-    if (session.cfg?.bands?.[k]?.enabled) guides.push({ hz: session.cfg.bands[k].center, color: BAND_COLORS[k] + 'aa' });
-  }
+  const guides = sessionBands(session).map(b => ({ hz: b.center, color: bandColor(b.id) + 'aa' }));
   drawWaterfall(ctx, W, H, slices, {
     guides, startMs: session.startedAt, endMs: session.endedAt || Date.now(),
   });
@@ -191,10 +183,11 @@ function renderStats() {
   const longest = events.reduce((m, e) => Math.max(m, e.durationS), 0);
   const peak = events.reduce((m, e) => Math.max(m, e.peakDb ?? -Infinity), -Infinity);
   const gapS = gaps.reduce((s, g) => s + g.durationS, 0);
-  const perBand = BAND_KEYS.map(k => {
+  const bandIds = [...new Set(events.map(e => e.band))].sort();
+  const perBand = bandIds.map(k => {
     const n = events.filter(e => e.band === k).length;
-    return n ? `<span style="color:${BAND_COLORS[k]}">${k}:${n}</span>` : null;
-  }).filter(Boolean).join(' ');
+    return `<span style="color:${bandColor(k)}">${k}:${n}</span>`;
+  }).join(' ');
   $('summary-stats').innerHTML = `
     <div class="stat-item"><div class="s-lbl">Durata</div><div class="s-val">${fmtDur(totalS)}</div></div>
     <div class="stat-item"><div class="s-lbl">Eventi</div><div class="s-val">${events.length} <small>${perBand}</small></div></div>
@@ -225,7 +218,7 @@ function renderEvents() {
       n++;
       tr.innerHTML = `<td>${n}</td><td>${fmtClock(ev.startT * 1000)}</td><td>${fmtClock(ev.endT * 1000)}</td>
         <td>${fmtDur(ev.durationS)}</td><td class="mono">${ev.peakDb?.toFixed(1) ?? '—'}</td>
-        <td><span style="color:${BAND_COLORS[ev.band] || '#fff'}">${ev.band}</span></td>`;
+        <td><span style="color:${bandColor(ev.band)}">${ev.band}</span></td>`;
     }
     tbody.appendChild(tr);
   }
@@ -253,7 +246,7 @@ function renderClips() {
     const row = document.createElement('div');
     row.className = 'clip-row';
     const ext = c.mime.includes('mp4') ? 'm4a' : 'webm';
-    row.innerHTML = `<span style="color:${BAND_COLORS[c.band] || '#fff'}">${c.band}</span>
+    row.innerHTML = `<span style="color:${bandColor(c.band)}">${c.band}</span>
       <span class="mono">${fmtClock(c.t * 1000)}</span>`;
     const play = document.createElement('button');
     play.className = 'btn btn-sm';
@@ -279,7 +272,7 @@ function baseName() {
 
 export function exportEventsCsv() {
   const { session, events, gaps } = cur;
-  const b = session.cfg?.bands || {};
+  const bands = sessionBands(session, { all: true });
   const lines = ['index,band,center_hz,width_hz,threshold_dbfs,start_iso,end_iso,duration_s,peak_dbfs,avg_dbfs'];
   let n = 0;
   for (const ev of [...events, ...gaps].sort((x, y) => x.startT - y.startT)) {
@@ -287,7 +280,7 @@ export function exportEventsCsv() {
       lines.push(`,GAP,,,,${fmtIso(ev.startT)},${fmtIso(ev.endT)},${ev.durationS},,`);
     } else {
       n++;
-      const bc = b[ev.band] || {};
+      const bc = bands.find(b => b.id === ev.band) || {};
       lines.push(`${n},${ev.band},${bc.center ?? ''},${bc.width ?? ''},${bc.thr ?? ''},${fmtIso(ev.startT)},${fmtIso(ev.endT)},${ev.durationS},${ev.peakDb?.toFixed(2) ?? ''},${ev.avgDb?.toFixed(2) ?? ''}`);
     }
   }
@@ -295,10 +288,13 @@ export function exportEventsCsv() {
 }
 
 export function exportSamplesCsv() {
-  const { samples } = cur;
-  const lines = ['t_iso,t_epoch_s,band_a_dbfs,band_b_dbfs,band_c_dbfs,broadband_20_500_dbfs,dominant_hz'];
+  const { session, samples } = cur;
+  const bands = sessionBands(session, { all: true });
+  const cols = bands.map(b => `band_${b.id}_dbfs`).join(',');
+  const lines = [`t_iso,t_epoch_s,${cols},broadband_20_500_dbfs,dominant_hz`];
   for (const s of samples) {
-    lines.push(`${fmtIso(s.t)},${s.t},${s.a?.toFixed(2) ?? ''},${s.b?.toFixed(2) ?? ''},${s.c?.toFixed(2) ?? ''},${s.ref?.toFixed(2) ?? ''},${s.domHz ?? ''}`);
+    const vals = bands.map(b => sampleLevel(s, b.id)?.toFixed(2) ?? '').join(',');
+    lines.push(`${fmtIso(s.t)},${s.t},${vals},${s.ref?.toFixed(2) ?? ''},${s.domHz ?? ''}`);
   }
   download(new Blob([lines.join('\n')], { type: 'text/csv' }), `${baseName()}_campioni.csv`);
 }

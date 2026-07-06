@@ -1,13 +1,16 @@
 // UI della modalità notturna: pannelli, strisce presenza, blackout, marker.
+// Le righe per-banda (meter e strisce) sono generate dinamicamente
+// dall'elenco corrente delle bande attive.
 'use strict';
 
-import { cfg, enabledBands, BAND_KEYS, BAND_COLORS, bandLabel } from './config.js';
+import { cfg, enabledBands, bandColor, getBand } from './config.js';
 import * as audio from './audio.js';
 import * as night from './night.js';
 import { showToast, fmtDur, fmtClock, drawWaterfall, setupCanvas } from './ui.js';
 import { stopLive, liveRunning } from './live.js';
 
 const $ = id => document.getElementById(id);
+let rowsSig = ''; // firma dell'elenco bande per cui sono state costruite le righe
 
 function setPanels(on) {
   $('btn-night-start').style.display = on ? 'none' : '';
@@ -20,9 +23,29 @@ function setPanels(on) {
   if (!on) $('blackout').style.display = 'none';
 }
 
+// Ricostruisce le righe per-banda se l'elenco delle bande attive è cambiato.
+function syncBandRows() {
+  const ids = enabledBands();
+  const sig = ids.join(',');
+  if (sig === rowsSig) return;
+  rowsSig = sig;
+  $('nm-rows').innerHTML = ids.map(k => {
+    const c = bandColor(k);
+    return `<div class="now-meter" id="nm-row-${k}">
+      <span class="nm-label">${k}</span>
+      <div class="nm-track"><div class="nm-fill" id="nm-fill-${k}" style="background:${c}"></div><div class="nm-thr" id="nm-thr-${k}"></div></div>
+      <span class="nm-status mono" id="nm-status-${k}">—</span>
+    </div>`;
+  }).join('');
+  $('ps-rows').innerHTML = ids.map(k =>
+    `<div class="presence-strip" id="ps-row-${k}"><span class="ps-label">${k}</span><div class="ps-track" id="ps-${k}"></div></div>`
+  ).join('');
+}
+
 // Aggiornamento 1/s: waterfall, strisce, contatori.
 function perSecondUi() {
   if (!night.nightRunning) return;
+  syncBandRows();
   drawNightWf();
   drawStrips();
 }
@@ -31,7 +54,8 @@ function perSecondUi() {
 function perTickUi(lv, fd) {
   const dom = audio.dominantHz(fd, night.WF_FMIN, night.WF_FMAX);
   $('now-hz').textContent = dom.hz.toFixed(1);
-  const active = enabledBands().filter(k => night.isBandActive(k));
+  const ids = enabledBands();
+  const active = ids.filter(k => night.isBandActive(k));
   const st = $('now-status');
   if (active.length) {
     const since = Math.min(...active.map(k => night.activeSince(k)));
@@ -41,14 +65,13 @@ function perTickUi(lv, fd) {
     st.textContent = 'silenzio';
     st.style.color = '#555';
   }
-  for (const k of BAND_KEYS) {
-    const row = $('nm-row-' + k);
-    if (!cfg.bands[k].enabled) { row.style.display = 'none'; continue; }
-    row.style.display = '';
+  for (const k of ids) {
+    const fill = $('nm-fill-' + k);
+    if (!fill) continue; // righe non ancora sincronizzate
     const db = lv[k] ?? -120;
     const pct = Math.max(0, Math.min(100, (db + 120) / 120 * 100));
-    const thrPct = Math.max(0, Math.min(100, (cfg.bands[k].thr + 120) / 120 * 100));
-    $('nm-fill-' + k).style.width = pct + '%';
+    const thrPct = Math.max(0, Math.min(100, (getBand(k).thr + 120) / 120 * 100));
+    fill.style.width = pct + '%';
     $('nm-thr-' + k).style.left = thrPct + '%';
     const sm = night.smState(k);
     const el = $('nm-status-' + k);
@@ -63,7 +86,7 @@ function perTickUi(lv, fd) {
 
 function drawNightWf() {
   const { ctx, W, H } = setupCanvas($('night-wf-canvas'), 72);
-  const guides = enabledBands().map(k => ({ hz: cfg.bands[k].center, color: BAND_COLORS[k] + '88' }));
+  const guides = enabledBands().map(k => ({ hz: getBand(k).center, color: bandColor(k) + '88' }));
   drawWaterfall(ctx, W, H, night.sessionSlices, {
     guides,
     startMs: night.session?.startedAt, endMs: Date.now(),
@@ -76,27 +99,24 @@ function drawStrips() {
   const tMax = Date.now() / 1000;
   const span = Math.max(tMax - tMin, 1);
   const evs = night.sessionEvents();
-  let count = 0;
-  for (const k of BAND_KEYS) {
-    const row = $('ps-row-' + k);
-    if (!cfg.bands[k].enabled) { row.style.display = 'none'; continue; }
-    row.style.display = '';
+  const ids = enabledBands();
+  for (const k of ids) {
     const track = $('ps-' + k);
+    if (!track) continue;
     track.innerHTML = '';
     const bandEvs = evs.filter(e => e.band === k).map(e => ({ s: e.startT, e: e.endT }));
     const since = night.activeSince(k);
     if (since !== null) bandEvs.push({ s: since, e: tMax });
-    count += bandEvs.length;
     for (const ev of bandEvs) {
       const bar = document.createElement('div');
       bar.className = 'ps-bar';
-      bar.style.cssText = `left:${((ev.s - tMin) / span * 100).toFixed(2)}%;width:${Math.max((ev.e - ev.s) / span * 100, 0.4).toFixed(2)}%;background:${BAND_COLORS[k]}`;
-    track.appendChild(bar);
+      bar.style.cssText = `left:${((ev.s - tMin) / span * 100).toFixed(2)}%;width:${Math.max((ev.e - ev.s) / span * 100, 0.4).toFixed(2)}%;background:${bandColor(k)}`;
+      track.appendChild(bar);
     }
   }
   // marker come tacche bianche sulla prima striscia visibile
-  const firstK = enabledBands()[0];
-  if (firstK) {
+  const firstK = ids[0];
+  if (firstK && $('ps-' + firstK)) {
     const track = $('ps-' + firstK);
     for (const m of night.sessionMarkers()) {
       const tick = document.createElement('div');
@@ -142,7 +162,7 @@ export function initNightUi() {
   $('btn-night-start').addEventListener('click', async () => {
     if (liveRunning) stopLive(true); // tieni vivo l'AudioContext
     const ok = await night.startNight();
-    if (ok) { setPanels(true); drawNightWf(); drawStrips(); }
+    if (ok) { rowsSig = ''; syncBandRows(); setPanels(true); drawNightWf(); drawStrips(); }
   });
   $('btn-night-stop').addEventListener('click', async () => {
     await night.stopNight();

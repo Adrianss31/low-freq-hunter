@@ -2,8 +2,8 @@
 // timeline ed elenco eventi — pensata per essere allegata come documentazione.
 'use strict';
 
-import { BAND_COLORS, BAND_KEYS } from './config.js';
-import { fmtClock, fmtDate, fmtDur, drawWaterfall } from './ui.js';
+import { bandColor } from './config.js';
+import { fmtClock, fmtDate, fmtDur, drawWaterfall, sessionBands, sampleLevel } from './ui.js';
 
 const W = 1400;
 
@@ -26,8 +26,8 @@ export async function renderReportPng(data) {
   const startStr = `${fmtDate(session.startedAt)} ${fmtClock(session.startedAt)}`;
   const endStr = session.endedAt ? `${fmtDate(session.endedAt)} ${fmtClock(session.endedAt)}` : '—';
   const durStr = session.endedAt ? fmtDur((session.endedAt - session.startedAt) / 1000) : '—';
-  const bandsStr = BAND_KEYS.filter(k => session.cfg?.bands?.[k]?.enabled)
-    .map(k => { const b = session.cfg.bands[k]; return `${k}: ${b.center}±${b.width} Hz @ ${b.thr} dBFS`; })
+  const bandsStr = sessionBands(session)
+    .map(b => `${b.id}: ${b.center}±${b.width} Hz @ ${b.thr} dBFS`)
     .join('   ·   ');
   const lines = [
     `Sessione: ${session.label}     Inizio: ${startStr}     Fine: ${endStr}     Durata: ${durStr}`,
@@ -45,8 +45,7 @@ export async function renderReportPng(data) {
   ctx.save();
   ctx.translate(30, y);
   if (slices.length) {
-    const guides = BAND_KEYS.filter(k => session.cfg?.bands?.[k]?.enabled)
-      .map(k => ({ hz: session.cfg.bands[k].center, color: BAND_COLORS[k] }));
+    const guides = sessionBands(session).map(b => ({ hz: b.center, color: bandColor(b.id) }));
     drawWaterfall(ctx, W - 60, 150, slices, { guides, startMs: session.startedAt, endMs: session.endedAt || Date.now(), light: false });
     ctx.strokeStyle = '#ccc';
     ctx.strokeRect(0, 0, W - 60, 150);
@@ -84,7 +83,7 @@ export async function renderReportPng(data) {
       ctx.fillText(
         `${String(n).padEnd(4)} ${ev.band}       ${fmtClock(ev.startT * 1000)}    ${fmtClock(ev.endT * 1000)}    ${fmtDur(ev.durationS).padEnd(10)}  ${(ev.peakDb?.toFixed(1) ?? '—').padEnd(12)} ${ev.avgDb?.toFixed(1) ?? '—'}`,
         30, ry);
-      ctx.fillStyle = BAND_COLORS[ev.band] || '#000';
+      ctx.fillStyle = bandColor(ev.band);
       ctx.fillRect(62, ry - 9, 8, 8);
     }
   });
@@ -121,7 +120,7 @@ function drawReportTimeline(ctx, x0, y0, w, h, data) {
     ctx.fillRect(xOf(g.startT), 0, Math.max(xOf(g.endT) - xOf(g.startT), 2), h);
   }
   for (const ev of events) {
-    ctx.fillStyle = (BAND_COLORS[ev.band] || '#888') + '30';
+    ctx.fillStyle = bandColor(ev.band) + '30';
     ctx.fillRect(xOf(ev.startT), 0, Math.max(xOf(ev.endT) - xOf(ev.startT), 2), h);
   }
 
@@ -134,18 +133,16 @@ function drawReportTimeline(ctx, x0, y0, w, h, data) {
     ctx.fillText(db + '', 4, y - 2);
   }
 
-  const sCfg = session.cfg;
+  const bands = sessionBands(session);
   ctx.setLineDash([4, 4]);
-  for (const k of BAND_KEYS) {
-    if (!sCfg?.bands?.[k]?.enabled) continue;
-    ctx.strokeStyle = BAND_COLORS[k];
-    const y = yOf(sCfg.bands[k].thr);
+  for (const b of bands) {
+    ctx.strokeStyle = bandColor(b.id);
+    const y = yOf(b.thr);
     ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
   }
   ctx.setLineDash([]);
 
   const stride = Math.max(1, Math.floor(samples.length / (w * 1.5)));
-  const keyOf = { A: 'a', B: 'b', C: 'c' };
   const plotLine = (getter, color, width) => {
     ctx.beginPath();
     let started = false;
@@ -159,9 +156,8 @@ function drawReportTimeline(ctx, x0, y0, w, h, data) {
     ctx.strokeStyle = color; ctx.lineWidth = width; ctx.stroke();
   };
   plotLine(s => s.ref, '#bbb', 1);
-  for (const k of BAND_KEYS) {
-    if (!sCfg?.bands?.[k]?.enabled) continue;
-    plotLine(s => s[keyOf[k]], BAND_COLORS[k], 1.4);
+  for (const b of bands) {
+    plotLine(s => sampleLevel(s, b.id), bandColor(b.id), 1.4);
   }
 
   for (const m of markers) {

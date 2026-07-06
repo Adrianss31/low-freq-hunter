@@ -2,7 +2,7 @@
 // banda con soglie, picco, freeze, sonificazione, confronto A/B.
 'use strict';
 
-import { cfg, bandRange, bandLabel, enabledBands, BAND_COLORS } from './config.js';
+import { cfg, bandRange, bandLabel, enabledBands, getBand, bandColor } from './config.js';
 import * as audio from './audio.js';
 import { setupCanvas, wfColor, showToast } from './ui.js';
 
@@ -50,12 +50,12 @@ function drawSpectrum(fd) {
 
   // Evidenzia bande + segmento orizzontale alla soglia
   for (const k of enabledBands()) {
-    const r = bandRange(k), c = BAND_COLORS[k];
+    const r = bandRange(k), c = bandColor(k);
     const x0 = xOf(r.lo), x1 = xOf(r.hi);
     if (x0 > W) continue;
     ctx.fillStyle = c + '18';
     ctx.fillRect(x0, 0, Math.max(x1 - x0, 2), H);
-    const y = yOf(cfg.bands[k].thr);
+    const y = yOf(getBand(k).thr);
     ctx.strokeStyle = c;
     ctx.lineWidth = 2;
     ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(Math.min(x1, W), y); ctx.stroke();
@@ -79,13 +79,13 @@ function drawSpectrum(fd) {
 
   // Marker centri banda
   for (const k of enabledBands()) {
-    const f = cfg.bands[k].center, x = xOf(f);
+    const f = getBand(k).center, x = xOf(f);
     if (x < 0 || x > W) continue;
-    ctx.strokeStyle = BAND_COLORS[k];
+    ctx.strokeStyle = bandColor(k);
     ctx.setLineDash([4, 3]); ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
     ctx.setLineDash([]);
-    ctx.fillStyle = BAND_COLORS[k];
+    ctx.fillStyle = bandColor(k);
     ctx.font = 'bold 9px monospace';
     ctx.fillText(k + ' ' + f, x + 2, 11);
   }
@@ -123,28 +123,41 @@ function drawWfLive() {
   // guide bande
   ctx.font = '8px monospace';
   for (const k of enabledBands()) {
-    const f = cfg.bands[k].center;
+    const f = getBand(k).center;
     const y = H - (f - WF_FMIN) / (WF_FMAX - WF_FMIN) * H;
     if (y < 0 || y > H) continue;
-    ctx.fillStyle = BAND_COLORS[k];
+    ctx.fillStyle = bandColor(k);
     ctx.fillRect(0, y, 6, 1);
     ctx.fillText(String(f), 8, y + 3);
   }
 }
 
+// Ricostruisce le righe dei meter se l'elenco delle bande attive è cambiato.
+let meterSig = '';
+function syncMeterRows() {
+  const ids = enabledBands();
+  const sig = ids.join(',');
+  if (sig === meterSig) return;
+  meterSig = sig;
+  $('live-meters').innerHTML = ids.map(k => `
+    <div class="lm-row" id="lm-row-${k}">
+      <span class="lm-name" id="lm-name-${k}">${bandLabel(k)}</span>
+      <div class="lm-track"><div class="lm-fill" id="lm-fill-${k}" style="background:${bandColor(k)}"></div><div class="lm-thr" id="lm-thr-${k}"></div></div>
+      <span class="lm-val mono" id="lm-val-${k}">—</span>
+    </div>`).join('');
+}
+
 function updateMeters(lv) {
-  for (const k of ['A', 'B', 'C']) {
-    const row = $('lm-row-' + k);
-    if (!cfg.bands[k].enabled) { row.style.display = 'none'; continue; }
-    row.style.display = '';
-    const db = lv[k];
+  for (const k of enabledBands()) {
+    const fill = $('lm-fill-' + k);
+    if (!fill) continue;
+    const b = getBand(k), db = lv[k];
     const pct = Math.max(0, Math.min(100, (db + 120) / 120 * 100));
-    const thrPct = Math.max(0, Math.min(100, (cfg.bands[k].thr + 120) / 120 * 100));
-    $('lm-fill-' + k).style.width = pct + '%';
+    const thrPct = Math.max(0, Math.min(100, (b.thr + 120) / 120 * 100));
+    fill.style.width = pct + '%';
     $('lm-thr-' + k).style.left = thrPct + '%';
     $('lm-val-' + k).textContent = isFinite(db) ? db.toFixed(1) : '—';
-    $('lm-val-' + k).style.color = db >= cfg.bands[k].thr ? 'var(--red)' : '';
-    $('lm-name-' + k).textContent = bandLabel(k);
+    $('lm-val-' + k).style.color = db >= b.thr ? 'var(--red)' : '';
   }
 }
 
@@ -211,13 +224,14 @@ function syncButtons() {
 }
 
 export function refreshBandUi() {
-  document.querySelectorAll('.band-btn').forEach(b => {
-    const k = b.dataset.band;
-    b.style.display = cfg.bands[k].enabled ? '' : 'none';
-    b.textContent = bandLabel(k);
-    b.classList.toggle('active', k === selBand);
-  });
-  $('live-sel-label').textContent = bandLabel(selBand);
+  const ids = enabledBands();
+  if (!ids.includes(selBand)) selBand = ids[0] || null;
+  $('band-selector').innerHTML = ids.map(k =>
+    `<button class="band-btn${k === selBand ? ' active' : ''}" data-band="${k}">${bandLabel(k)}</button>`
+  ).join('');
+  $('live-sel-label').textContent = selBand ? bandLabel(selBand) : '—';
+  meterSig = ''; // etichette/colori possono essere cambiati: forza il rebuild
+  syncMeterRows();
 }
 
 export function initLive() {
@@ -227,11 +241,13 @@ export function initLive() {
     audio.isSonifying() ? audio.stopSonify() : audio.startSonify();
     syncButtons();
   });
-  document.querySelectorAll('.band-btn').forEach(b => b.addEventListener('click', () => {
+  $('band-selector').addEventListener('click', e => {
+    const b = e.target.closest('.band-btn');
+    if (!b) return;
     selBand = b.dataset.band;
     peakDb = -Infinity;
     refreshBandUi();
-  }));
+  });
   $('btn-cap-a').addEventListener('click', () => {
     capA = currentSelLevel();
     $('cap-a-val').textContent = capA !== null ? capA.toFixed(1) : '—';
@@ -248,7 +264,7 @@ export function initLive() {
 
 function currentSelLevel() {
   const fd = audio.spectrum();
-  if (!fd) return null;
+  if (!fd || !selBand) return null;
   const r = bandRange(selBand);
   return audio.bandDb(fd, r.lo, r.hi);
 }

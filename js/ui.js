@@ -36,6 +36,30 @@ export function download(blob, name) {
   setTimeout(() => URL.revokeObjectURL(a.href), 15000);
 }
 
+// ── Compatibilità formati sessione ─────────────────────────────────────────
+// Le sessioni registrate prima delle bande dinamiche hanno cfg.bands come
+// oggetto {A:{...},B:{...},C:{...}} e campioni con campi a/b/c; quelle nuove
+// hanno un array di bande e campioni con lv:{id:dB}.
+
+// Bande della sessione come array; con {all:true} include anche le disattivate.
+export function sessionBands(session, opts = {}) {
+  const raw = session?.cfg?.bands;
+  if (!raw) return [];
+  const arr = Array.isArray(raw)
+    ? raw
+    : Object.entries(raw).sort(([a], [b]) => a.localeCompare(b)).map(([id, b]) => ({ id, ...b }));
+  return opts.all ? arr : arr.filter(b => b.enabled !== false);
+}
+
+const LEGACY_KEYS = { A: 'a', B: 'b', C: 'c' };
+
+// Livello (dBFS) di una banda in un campione, qualunque sia il formato.
+export function sampleLevel(s, id) {
+  if (s.lv) return s.lv[id] ?? null;
+  const k = LEGACY_KEYS[id];
+  return k ? (s[k] ?? null) : null;
+}
+
 // Colormap tipo "inferno" per i waterfall (v in [0,1]).
 const STOPS = [[5, 10, 30], [30, 20, 90], [120, 30, 130], [210, 60, 120], [255, 140, 50], [255, 220, 100], [255, 255, 235]];
 export function wfColor(v) {

@@ -18,7 +18,8 @@ quando iniziano, quanto durano, con che intensità.
   Export: **report PNG** autocontenuto, CSV eventi, CSV campioni, JSON.
 
 Scelte deliberate: **soglie assolute in dBFS** (niente calibrazione o baseline
-adattiva), tre bande completamente configurabili (C disattivabile). I buchi di
+adattiva), bande completamente configurabili: aggiungine quante ne servono
+(fino a 8), ognuna con centro, larghezza e soglia propri. I buchi di
 monitoraggio (>5 s senza analisi) vengono registrati come **gap**: per un dato
 che vuole essere una prova conta anche sapere quando NON si stava misurando.
 

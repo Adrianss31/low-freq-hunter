@@ -1,11 +1,11 @@
 // Bootstrap: navigazione, impostazioni, recovery, service worker, batteria.
 'use strict';
 
-import { cfg, saveCfg, resetCfg, loadCfg, BAND_KEYS } from './config.js';
+import { cfg, saveCfg, resetCfg, loadCfg, getBand, addBand, removeBand, bandColor, MAX_BANDS } from './config.js';
 import * as audio from './audio.js';
 import { openDb, storageEstimate } from './db.js';
 import { showToast } from './ui.js';
-import { initLive, refreshBandUi, liveRunning } from './live.js';
+import { initLive, refreshBandUi } from './live.js';
 import { initNightUi } from './nightui.js';
 import * as night from './night.js';
 import * as sessions from './sessions.js';
@@ -22,19 +22,38 @@ function switchTab(id) {
   if (id === 'settings') { populateSettings(); updateStorageInfo(); }
 }
 
+// ── Card bande (dinamiche) ──────────────────────────────────────────────────
+function renderBandCards() {
+  $('band-cards').innerHTML = cfg.bands.map(b => {
+    const c = bandColor(b.id);
+    return `
+    <div class="band-card${b.enabled ? '' : ' disabled'}" data-band="${b.id}" style="--bc:${c}">
+      <div class="band-card-head">
+        <div class="band-dot"></div>
+        <div class="band-id">${b.id}</div>
+        <div class="band-head-name">${b.center} Hz ±${b.width}</div>
+        <div class="toggle${b.enabled ? ' on' : ''}" data-btoggle="${b.id}" title="Attiva/disattiva"></div>
+        ${cfg.bands.length > 1 ? `<button class="band-del" data-bdel="${b.id}" title="Elimina banda">✕</button>` : ''}
+      </div>
+      <div class="band-card-body">
+        <div class="band-param"><span class="band-param-label">Centro</span>
+          <div class="stepper"><button data-step="s-${b.id}-center" data-d="-1">−</button><input type="number" id="s-${b.id}-center" data-band="${b.id}" data-field="center" min="10" max="2000" step="1" value="${b.center}"><span class="stepper-unit">Hz</span><button data-step="s-${b.id}-center" data-d="1">+</button></div></div>
+        <div class="band-param"><span class="band-param-label">Larghezza ±</span>
+          <div class="stepper"><button data-step="s-${b.id}-width" data-d="-1">−</button><input type="number" id="s-${b.id}-width" data-band="${b.id}" data-field="width" min="1" max="200" step="1" value="${b.width}"><span class="stepper-unit">Hz</span><button data-step="s-${b.id}-width" data-d="1">+</button></div></div>
+        <div class="thr-block">
+          <div class="thr-head"><span class="thr-head-label">Soglia trigger</span><span><span class="thr-head-val">${b.thr}</span><span class="thr-head-unit"> dBFS</span></span></div>
+          <input type="range" data-band="${b.id}" data-field="thr" class="thr-sl" min="-100" max="-10" step="1" value="${b.thr}">
+          <div class="thr-hints"><span>← più sensibile</span><span>meno sensibile →</span></div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  $('btn-add-band').style.display = cfg.bands.length >= MAX_BANDS ? 'none' : '';
+}
+
 // ── Impostazioni ────────────────────────────────────────────────────────────
 function populateSettings() {
-  for (const k of BAND_KEYS) {
-    const b = cfg.bands[k];
-    $(`s-${k}-center`).value = b.center;
-    $(`s-${k}-width`).value = b.width;
-    $(`s-${k}-thr`).value = b.thr;
-    $(`s-${k}-thr-val`).textContent = b.thr;
-    if (k === 'C') {
-      $('s-C-enabled').classList.toggle('on', b.enabled);
-      $('band-card-C').classList.toggle('disabled', !b.enabled);
-    }
-  }
+  renderBandCards();
   $('s-minon').value = cfg.minOnS; $('s-minon-val').textContent = cfg.minOnS;
   $('s-minoff').value = cfg.minOffS; $('s-minoff-val').textContent = cfg.minOffS;
   $('s-xmax').value = cfg.specXMax;
@@ -49,13 +68,16 @@ function populateSettings() {
   });
 }
 
+const LIMITS = { center: [10, 2000], width: [1, 200], thr: [-100, -10] };
+
 function collectSettings() {
-  for (const k of BAND_KEYS) {
-    const b = cfg.bands[k];
-    b.center = clampNum($(`s-${k}-center`).value, 10, 2000, b.center);
-    b.width = clampNum($(`s-${k}-width`).value, 1, 200, b.width);
-    b.thr = clampNum($(`s-${k}-thr`).value, -100, -10, b.thr);
-  }
+  document.querySelectorAll('#band-cards input[data-band]').forEach(inp => {
+    const b = getBand(inp.dataset.band);
+    if (!b) return;
+    const f = inp.dataset.field;
+    const [lo, hi] = LIMITS[f];
+    b[f] = clampNum(inp.value, lo, hi, b[f]);
+  });
   cfg.minOnS = clampNum($('s-minon').value, 1, 120, cfg.minOnS);
   cfg.minOffS = clampNum($('s-minoff').value, 1, 300, cfg.minOffS);
   cfg.specXMax = clampNum($('s-xmax').value, 100, 2000, cfg.specXMax);
@@ -76,7 +98,13 @@ function applyAndSave() {
     audio.setSmoothing(night.nightRunning ? cfg.smoothNight : cfg.smoothLive);
   }
   refreshBandUi();
-  for (const k of BAND_KEYS) $(`s-${k}-thr-val`).textContent = cfg.bands[k].thr;
+  // Aggiorna le etichette delle card senza ricostruirle (per non perdere il focus)
+  document.querySelectorAll('#band-cards .band-card').forEach(card => {
+    const b = getBand(card.dataset.band);
+    if (!b) return;
+    card.querySelector('.band-head-name').textContent = `${b.center} Hz ±${b.width}`;
+    card.querySelector('.thr-head-val').textContent = b.thr;
+  });
   const msg = $('settings-saved-msg');
   msg.textContent = '✓ Salvate';
   msg.style.color = 'var(--accent)';
@@ -95,27 +123,58 @@ async function updateStorageInfo() {
 }
 
 function initSettingsUi() {
-  // Stepper ±
+  // Stepper ± (delegato: funziona anche sulle card generate dopo)
   $('tab-settings').addEventListener('click', e => {
     const btn = e.target.closest('button[data-step]');
     if (!btn) return;
     const inp = $(btn.dataset.step);
+    if (!inp) return;
     const step = +inp.step || 1;
     inp.value = +(+inp.value + (+btn.dataset.d * step)).toFixed(4);
     applyAndSave();
   });
-  // Slider con display live
-  [['s-A-thr', 's-A-thr-val'], ['s-B-thr', 's-B-thr-val'], ['s-C-thr', 's-C-thr-val'],
-   ['s-minon', 's-minon-val'], ['s-minoff', 's-minoff-val'],
-   ['s-smooth-live', 's-smooth-live-val'], ['s-smooth-night', 's-smooth-night-val']]
-    .forEach(([sl, val]) => {
-      $(sl).addEventListener('input', () => { $(val).textContent = $(sl).value; });
-    });
-  // Auto-save su ogni input
-  document.querySelectorAll('#tab-settings input').forEach(el => {
-    el.addEventListener('change', applyAndSave);
-    if (el.type === 'range') el.addEventListener('input', applyAndSave);
+
+  // Ogni input (statico o dinamico): aggiorna eventuale etichetta e salva
+  const labelMap = {
+    's-minon': 's-minon-val', 's-minoff': 's-minoff-val',
+    's-smooth-live': 's-smooth-live-val', 's-smooth-night': 's-smooth-night-val',
+  };
+  $('tab-settings').addEventListener('input', e => {
+    const t = e.target;
+    if (t.tagName !== 'INPUT') return;
+    if (labelMap[t.id]) $(labelMap[t.id]).textContent = t.value;
+    applyAndSave();
   });
+  $('tab-settings').addEventListener('change', e => {
+    if (e.target.tagName === 'INPUT') applyAndSave();
+  });
+
+  // Toggle attiva/disattiva ed eliminazione banda (delegati sulle card)
+  $('band-cards').addEventListener('click', e => {
+    const tog = e.target.closest('[data-btoggle]');
+    if (tog) {
+      const b = getBand(tog.dataset.btoggle);
+      if (b) { b.enabled = !b.enabled; renderBandCards(); applyAndSave(); }
+      return;
+    }
+    const del = e.target.closest('[data-bdel]');
+    if (del) {
+      const id = del.dataset.bdel;
+      if (confirm(`Eliminare la banda ${id}?`)) {
+        removeBand(id);
+        renderBandCards();
+        applyAndSave();
+      }
+    }
+  });
+
+  $('btn-add-band').addEventListener('click', () => {
+    const b = addBand();
+    if (!b) { showToast(`Massimo ${MAX_BANDS} bande.`); return; }
+    renderBandCards();
+    applyAndSave();
+  });
+
   // Chips FFT
   document.querySelectorAll('.chip[data-fft]').forEach(chip => {
     chip.addEventListener('click', () => {
@@ -125,13 +184,7 @@ function initSettingsUi() {
       applyAndSave();
     });
   });
-  // Toggle
-  $('s-C-enabled').addEventListener('click', function () {
-    cfg.bands.C.enabled = !cfg.bands.C.enabled;
-    this.classList.toggle('on', cfg.bands.C.enabled);
-    $('band-card-C').classList.toggle('disabled', !cfg.bands.C.enabled);
-    applyAndSave();
-  });
+
   $('s-sonify-toggle').addEventListener('click', function () {
     cfg.sonify = !cfg.sonify;
     this.classList.toggle('on', cfg.sonify);

@@ -9,7 +9,7 @@
 // quanto la misura stessa.
 'use strict';
 
-import { cfg, cfgSnapshot, enabledBands, bandRange, BAND_KEYS, BAND_COLORS } from './config.js';
+import { cfg, cfgSnapshot, enabledBands, bandRange, getBand } from './config.js';
 import * as audio from './audio.js';
 import { dbPut, dbBatch, dbAll, uuid, requestPersistentStorage } from './db.js';
 import { showToast, fmtDur, fmtClock } from './ui.js';
@@ -52,7 +52,9 @@ export function sessionMarkers() { return markers; }
 
 // ── Macchina a stati per banda ──────────────────────────────────────────────
 function smStep(sm, level, t) {
-  const thrOn = cfg.bands[sm.band].thr;
+  const band = getBand(sm.band);
+  if (!band) return; // banda rimossa a sessione in corso
+  const thrOn = band.thr;
   const thrOff = thrOn - cfg.hystDb;
   switch (sm.state) {
     case S.IDLE:
@@ -107,11 +109,10 @@ function onEventStart(band, startT) {
 function handleGap(fromS, toS) {
   // Durante il buco non sappiamo nulla: chiudi gli eventi aperti all'inizio
   // del gap e riparti da zero, poi registra il gap stesso.
-  for (const k of BAND_KEYS) {
-    const sm = sms[k];
-    if (sm && sm.evStart !== null && (sm.state === S.ACTIVE || sm.state === S.FALLING)) {
+  for (const sm of Object.values(sms)) {
+    if (sm.evStart !== null && (sm.state === S.ACTIVE || sm.state === S.FALLING)) {
       closeEvent(sm, fromS);
-    } else if (sm) {
+    } else {
       sm.state = S.IDLE;
     }
   }
@@ -240,13 +241,19 @@ function tick() {
   if (secAcc.n) {
     const t = secAcc.sec;
     const avg = {};
-    for (const k of enabledBands()) avg[k] = 10 * Math.log10((secAcc.p[k] || 0) / secAcc.n + 1e-12);
+    for (const k of enabledBands()) {
+      if (secAcc.p[k] === undefined) continue; // banda aggiunta a metà secondo
+      avg[k] = Math.round(10 * Math.log10(secAcc.p[k] / secAcc.n + 1e-12) * 100) / 100;
+    }
     const avgRef = 10 * Math.log10(secAcc.pRef / secAcc.n + 1e-12);
     const dom = audio.dominantHz(fd, WF_FMIN, WF_FMAX);
-    for (const k of enabledBands()) smStep(sms[k], avg[k], t);
+    for (const k of Object.keys(avg)) {
+      if (!sms[k]) sms[k] = newSM(k); // banda attivata a sessione in corso
+      smStep(sms[k], avg[k], t);
+    }
     sampleBuf.push({
       sessionId: session.id, t,
-      a: avg.A ?? null, b: avg.B ?? null, c: avg.C ?? null,
+      lv: avg,
       ref: avgRef, domHz: Math.round(dom.hz * 10) / 10,
     });
     if (t - lastSliceT >= SLICE_S) { emitSlice(t); lastSliceT = t; }
@@ -297,7 +304,7 @@ export async function startNight() {
   };
   await dbPut('sessions', session);
 
-  sms = {}; for (const k of BAND_KEYS) sms[k] = newSM(k);
+  sms = {}; for (const k of enabledBands()) sms[k] = newSM(k);
   events = []; markers = []; sampleBuf = []; sliceBuf = [];
   sessionSlices = []; sliceAcc = null; sliceCount = 0;
   secAcc = null; lastTickMs = 0; lastFlush = Date.now();
@@ -327,9 +334,8 @@ export async function stopNight() {
   try { recorder?.stop(); } catch { /* già fermo */ }
 
   const endS = Date.now() / 1000;
-  for (const k of BAND_KEYS) {
-    const sm = sms[k];
-    if (sm && sm.evStart !== null && (sm.state === S.ACTIVE || sm.state === S.FALLING)) {
+  for (const sm of Object.values(sms)) {
+    if (sm.evStart !== null && (sm.state === S.ACTIVE || sm.state === S.FALLING)) {
       closeEvent(sm, endS);
     }
   }
@@ -360,5 +366,3 @@ export async function recoverInterrupted() {
   }
   return n;
 }
-
-export { BAND_COLORS };
