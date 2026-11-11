@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#14161a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Controfase">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-512.png">
+<title>Controfase</title>
+<style>
+  :root {
+    --bg: #f4f2ee; --card: #ffffff; --ink: #1d1f23; --muted: #6b6f78; --line: #e3e0da;
+    --accent: #2f6fed; --good: #1f9d57; --bad: #d4442e; --warn: #c98a12;
+    --track: #e6e3dd; --mono: ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #14161a; --card: #1d2026; --ink: #e9eaee; --muted: #9096a3; --line: #2c3038;
+      --accent: #6c9bff; --good: #3ccf7f; --bad: #ff6a52; --warn: #f0b43c; --track: #2c3038;
+    }
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { margin: 0; background: var(--bg); color: var(--ink);
+    font: 14px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+  main { max-width: 760px; margin: 0 auto; padding: 22px 18px 40px; }
+  header { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+  h1 { font-size: 22px; margin: 0; letter-spacing: -0.01em; }
+  h1 span { color: var(--muted); font-weight: 400; font-size: 14px; margin-left: 8px; }
+  .hero { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+  .stat { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
+  .stat .k { color: var(--muted); font-size: 12px; }
+  .stat .v { font: 600 24px/1.2 var(--mono); margin-top: 2px; }
+  .stat .v small { font-size: 13px; font-weight: 400; color: var(--muted); }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 6px 16px 12px; margin-bottom: 14px; }
+  .card h2 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 10px 0 4px; font-weight: 600; }
+  .row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-top: 1px solid var(--line); min-height: 44px; flex-wrap: wrap; }
+  .card h2 + .row { border-top: none; }
+  .row > label, .row > .lbl { flex: 0 0 170px; color: var(--ink); }
+  .row .grow { flex: 1 1 200px; display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .num { font-family: var(--mono); font-variant-numeric: tabular-nums; min-width: 86px; text-align: right; }
+  .muted { color: var(--muted); }
+  input[type=range] { flex: 1; accent-color: var(--accent); min-width: 120px; }
+  input[type=number] { font: 15px var(--mono); width: 120px; padding: 5px 8px; border-radius: 7px;
+    border: 1px solid var(--line); background: var(--bg); color: var(--ink); text-align: right; }
+  button { font: inherit; font-size: 13px; padding: 5px 10px; border-radius: 7px; border: 1px solid var(--line);
+    background: var(--bg); color: var(--ink); cursor: pointer; }
+  button:hover:not(:disabled) { border-color: var(--accent); }
+  button:disabled { opacity: 0.45; cursor: default; }
+  button.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .btns { display: flex; gap: 4px; flex-wrap: wrap; margin-left: auto; }
+  .switch { position: relative; width: 42px; height: 24px; flex: 0 0 42px; }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .switch span { position: absolute; inset: 0; background: var(--track); border-radius: 24px; transition: .15s; cursor: pointer; }
+  .switch span::before { content: ""; position: absolute; width: 18px; height: 18px; left: 3px; top: 3px;
+    background: #fff; border-radius: 50%; transition: .15s; box-shadow: 0 1px 2px rgba(0,0,0,.25); }
+  .switch input:checked + span { background: var(--accent); }
+  .switch input:checked + span::before { transform: translateX(18px); }
+  .switch input:disabled + span { opacity: .45; cursor: default; }
+  canvas { width: 100%; height: 90px; display: block; border-radius: 8px; background: var(--bg); }
+  .msg { background: var(--card); border: 1px solid var(--line); border-left: 3px solid var(--accent);
+    border-radius: 10px; padding: 10px 14px; color: var(--ink); margin-bottom: 14px; min-height: 42px; }
+  .pill { font-size: 12px; padding: 2px 8px; border-radius: 99px; border: 1px solid var(--line); color: var(--muted); white-space: nowrap; }
+  .pill.ok { color: var(--good); border-color: var(--good); }
+  .pill.err { color: var(--warn); border-color: var(--warn); }
+  .pill.run { color: var(--accent); border-color: var(--accent); }
+  details { color: var(--muted); font-size: 13px; }
+  details summary { cursor: pointer; color: var(--ink); padding: 8px 0; }
+  details ol, details ul { padding-left: 20px; margin: 4px 0 10px; }
+  #startOverlay { position: fixed; inset: 0; background: color-mix(in srgb, var(--bg) 88%, transparent);
+    display: flex; align-items: center; justify-content: center; z-index: 10; backdrop-filter: blur(3px); }
+  #startOverlay .box { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 22px 24px; max-width: 420px; text-align: center; }
+  #startOverlay h3 { margin: 0 0 6px; }
+  #startOverlay p { color: var(--muted); margin: 0 0 16px; }
+  .simtag { color: var(--warn); font-size: 12px; }
+  @media (max-width: 600px) {
+    .hero { grid-template-columns: 1fr; }
+    .row > label, .row > .lbl { flex-basis: 100%; }
+  }
+</style>
+</head>
+<body>
+<div id="startOverlay">
+  <div class="box">
+    <h3>Controfase</h3>
+    <p>Genera un tono e lo mette in controfase con il ronzio, misurando il risultato col microfono.</p>
+    <button class="primary" id="startBtn">Avvia l'audio</button>
+  </div>
+</div>
+
+<main>
+  <header>
+    <h1>Controfase <span>cancellazione del ronzio a bassa frequenza</span></h1>
+    <span id="simTag" class="simtag" hidden>SIMULAZIONE</span>
+  </header>
+
+  <section class="hero">
+    <div class="stat"><div class="k" id="lvlLabel">Livello a 100,000 Hz</div><div class="v" id="lvlVal">—</div></div>
+    <div class="stat"><div class="k">Riduzione</div><div class="v" id="redVal">—</div></div>
+    <div class="stat"><div class="k">Tono in uscita</div><div class="v" id="outVal">spento</div></div>
+  </section>
+
+  <div class="msg" id="msg">Avvia l'audio, poi accendi il microfono e mettilo dove appoggi la testa sul cuscino.</div>
+
+  <section class="card">
+    <h2>Generatore</h2>
+    <div class="row">
+      <label for="outSw">Uscita attiva</label>
+      <div class="grow"><label class="switch"><input type="checkbox" id="outSw"><span></span></label></div>
+    </div>
+    <div class="row">
+      <label for="freqIn">Frequenza</label>
+      <div class="grow">
+        <input type="number" id="freqIn" step="0.001" min="10" max="1000" value="100.000"> <span class="muted">Hz</span>
+      </div>
+    </div>
+    <div class="row" style="border-top:none; padding-top:0">
+      <div class="btns" id="freqBtns"></div>
+    </div>
+    <div class="row">
+      <label for="ampIn">Ampiezza</label>
+      <div class="grow"><input type="range" id="ampIn" min="-60" max="0" step="0.1"><span class="num" id="ampVal"></span></div>
+    </div>
+    <div class="row">
+      <label for="phIn">Fase</label>
+      <div class="grow"><input type="range" id="phIn" min="0" max="360" step="0.1"><span class="num" id="phVal"></span></div>
+    </div>
+    <div class="row" style="border-top:none; padding-top:0">
+      <div class="btns" id="phBtns"></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Misura · microfono vicino al cuscino</h2>
+    <div class="row">
+      <label for="micSw">Microfono attivo</label>
+      <div class="grow"><label class="switch"><input type="checkbox" id="micSw"><span></span></label></div>
+    </div>
+    <div class="row">
+      <span class="lbl">Riferimento (uscita spenta)</span>
+      <div class="grow"><span class="num" id="baseVal">—</span><button id="baseBtn">Salva ora</button></div>
+    </div>
+    <div class="row"><canvas id="hist" height="90"></canvas></div>
+    <div class="row">
+      <span class="lbl">Frequenza esatta del disturbo</span>
+      <div class="grow"><span class="num" id="estVal">—</span><button id="useEstBtn">Usa</button></div>
+    </div>
+    <div class="row">
+      <span class="lbl">Livello totale microfono</span>
+      <div class="grow"><span class="num muted" id="totVal">—</span></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Cancellazione automatica</h2>
+    <div class="row">
+      <span class="lbl">Calibrazione percorso</span>
+      <div class="grow"><button id="calBtn">Calibra</button><span class="pill" id="calPill">non calibrato</span><span class="muted" id="pathVal"></span></div>
+    </div>
+    <div class="row">
+      <label for="autoSw">Cancellazione automatica</label>
+      <div class="grow"><label class="switch"><input type="checkbox" id="autoSw"><span></span></label></div>
+    </div>
+    <div class="row">
+      <label for="trackSw">Insegui la frequenza</label>
+      <div class="grow"><label class="switch"><input type="checkbox" id="trackSw"><span></span></label></div>
+    </div>
+    <div class="row">
+      <label for="muIn">Velocità di adattamento</label>
+      <div class="grow"><input type="range" id="muIn" min="0.02" max="0.5" step="0.01"><span class="num" id="muVal"></span></div>
+    </div>
+    <div class="row">
+      <label for="maxIn">Volume massimo</label>
+      <div class="grow"><input type="range" id="maxIn" min="-40" max="0" step="0.5"><span class="num" id="maxVal"></span></div>
+    </div>
+  </section>
+
+  <details>
+    <summary>Come si usa</summary>
+    <ol>
+      <li>Microfono attivo, uscita spenta. Dopo 15–20 s compare la frequenza esatta del disturbo: premi <b>Usa</b>, poi <b>Salva ora</b>.</li>
+      <li>Ampiezza intorno a −30 dBFS, volume del Mac a metà. Premi <b>Calibra</b> e resta in silenzio ~5 s.</li>
+      <li>Attiva <b>Cancellazione automatica</b>: la riduzione dovrebbe salire in pochi secondi.</li>
+      <li>Se ti sposti molto o sposti oggetti vicino al microfono, ricalibra.</li>
+    </ol>
+    <ul>
+      <li>La zona di silenzio è di circa 30–40 cm intorno al microfono; altrove il 100 Hz può aumentare.</li>
+      <li>Serve un altoparlante che arrivi ai 100 Hz, cablato e vicino alla testiera (non Bluetooth).</li>
+      <li>Se la vibrazione arriva dal letto o dal pavimento (via strutturale), un altoparlante non può toglierla.</li>
+    </ul>
+  </details>
+</main>
+
+<script type="text/worklet" id="workletSrc">
+class ControfaseProcessor extends AudioWorkletProcessor {
+  constructor() {
+    super();
+    this.fs = sampleRate;
+    this.theta = 0;
+    this.freq = 100;
+    this.wr = 0; this.wi = 0; this.tr = 0; this.ti = 0;
+    this.smooth = 1 - Math.exp(-1 / (0.05 * sampleRate));
+    this.blockLen = Math.round(sampleRate * 0.1);
+    this.win = new Float64Array(this.blockLen);
+    let s = 0;
+    for (let i = 0; i < this.blockLen; i++) {
+      this.win[i] = 0.5 - 0.5 * Math.cos(2 * Math.PI * i / this.blockLen);
+      s += this.win[i];
+    }
+    this.winSum = s;
+    this.idx = 0; this.accR = 0; this.accI = 0; this.accSq = 0;
+    this.blockFreq = 100;
+    this.sim = null;
+    this.port.onmessage = (e) => {
+      const d = e.data;
+      if (d.type === 'target') { this.freq = d.freq; this.tr = d.wr; this.ti = d.wi; }
+      else if (d.type === 'sim') { this.setupSim(d); }
+    };
+  }
+  setupSim(d) {
+    if (!d.on) { this.sim = null; return; }
+    const delay = Math.max(1, Math.round(d.delay * this.fs));
+    this.sim = {
+      g: d.gain, delay, buf: new Float64Array(delay + 1), pos: 0,
+      ad: d.amp, f: d.ftrue, phi: d.phase, noise: d.noise, n: 0
+    };
+  }
+  simSample(y) {
+    const s = this.sim;
+    s.buf[s.pos] = y;
+    const rd = (s.pos + 1) % s.buf.length; // campione di 'delay' passi fa
+    const yd = s.buf[rd];
+    s.pos = rd;
+    const t = s.n++ / this.fs;
+    // rumore gaussiano approssimato
+    const nz = (Math.random() + Math.random() + Math.random() - 1.5) * 2 * s.noise;
+    return s.g * yd + s.ad * Math.cos(2 * Math.PI * s.f * t + s.phi) + nz;
+  }
+  process(inputs, outputs) {
+    const out = outputs[0];
+    if (!out || !out[0]) return true;
+    const o0 = out[0];
+    const n = o0.length;
+    const inp = inputs[0] && inputs[0].length ? inputs[0][0] : null;
+    const twoPi = 2 * Math.PI;
+    const dphi = twoPi * this.freq / this.fs;
+    for (let i = 0; i < n; i++) {
+      this.wr += (this.tr - this.wr) * this.smooth;
+      this.wi += (this.ti - this.wi) * this.smooth;
+      const c = Math.cos(this.theta), s = Math.sin(this.theta);
+      const y = this.wr * c - this.wi * s;
+      o0[i] = y;
+      const x = this.sim ? this.simSample(y) : (inp ? inp[i] : 0);
+      const wx = x * this.win[this.idx];
+      this.accR += wx * c;
+      this.accI -= wx * s;
+      this.accSq += x * x;
+      this.idx++;
+      if (this.idx >= this.blockLen) {
+        this.port.postMessage({
+          re: 2 * this.accR / this.winSum, im: 2 * this.accI / this.winSum,
+          rms: Math.sqrt(this.accSq / this.blockLen),
+          freq: this.blockFreq, dur: this.blockLen / this.fs
+        });
+        this.idx = 0; this.accR = 0; this.accI = 0; this.accSq = 0;
+        this.blockFreq = this.freq;
+      }
+      this.theta += dphi;
+      if (this.theta >= twoPi) this.theta -= twoPi;
+    }
+    for (let ch = 1; ch < out.length; ch++) out[ch].set(o0);
+    return true;
+  }
+}
+registerProcessor('controfase', ControfaseProcessor);
+</script>
+
+<script>
+'use strict';
+// ---------- numeri complessi ----------
+const cx = (re, im) => ({ re, im });
+const ZERO = cx(0, 0);
+const cadd = (a, b) => cx(a.re + b.re, a.im + b.im);
+const csub = (a, b) => cx(a.re - b.re, a.im - b.im);
+const cmul = (a, b) => cx(a.re * b.re - a.im * b.im, a.re * b.im + a.im * b.re);
+const cscale = (a, k) => cx(a.re * k, a.im * k);
+const cconj = (a) => cx(a.re, -a.im);
+const cmag = (a) => Math.hypot(a.re, a.im);
+const cang = (a) => Math.atan2(a.im, a.re);
+const cpolar = (r, t) => cx(r * Math.cos(t), r * Math.sin(t));
+const cdiv = (a, b) => { const d = b.re * b.re + b.im * b.im; return d > 0 ? cx((a.re * b.re + a.im * b.im) / d, (a.im * b.re - a.re * b.im) / d) : ZERO; };
+const csqrt = (a) => cpolar(Math.sqrt(cmag(a)), cang(a) / 2);
+const db = (x) => 20 * Math.log10(Math.max(x, 1e-9));
+const undb = (d) => Math.pow(10, d / 20);
+const fmt = (v, d = 1) => v == null ? '—' : v.toLocaleString('it-IT', { minimumFractionDigits: d, maximumFractionDigits: d });
+
+const SIM = new URLSearchParams(location.search).has('sim');
+
+// ---------- stato ----------
+const st = {
+  outputOn: false, freq: 100, amp: undb(-30), phaseDeg: 0,
+  micOn: false, level: null, total: null, baseline: null, history: [], estFreq: null,
+  calState: 'none', calText: 'non calibrato', S: null, calFreq: 100, pathGainDb: null, pathPhaseDeg: null,
+  autoOn: false, track: true, mu: 0.15, maxAmp: undb(-6),
+  message: 'Avvia l\'audio, poi accendi il microfono e mettilo dove appoggi la testa sul cuscino.'
+};
+const HISTORY_LEN = 300;
+let ctx = null, node = null, micStream = null, micSrc = null;
+let calOverride = null, smoothed = null, prevOffM = null, dfSm = null;
+let calSteps = [], calIdx = 0, calTestW = ZERO;
+let prevAutoW = null, divergeCount = 0;
+
+function loadSettings() {
+  try {
+    const s = JSON.parse(localStorage.getItem('controfase') || '{}');
+    for (const k of ['freq', 'amp', 'phaseDeg', 'mu', 'maxAmp', 'track']) if (k in s) st[k] = s[k];
+  } catch (e) { /* storage non disponibile */ }
+}
+function saveSettings() {
+  try {
+    localStorage.setItem('controfase', JSON.stringify({ freq: st.freq, amp: st.amp, phaseDeg: st.phaseDeg, mu: st.mu, maxAmp: st.maxAmp, track: st.track }));
+  } catch (e) { /* ignora */ }
+}
+
+// ---------- audio ----------
+async function ensureAudio() {
+  if (ctx) { if (ctx.state !== 'running') await ctx.resume(); return; }
+  ctx = new AudioContext({ latencyHint: 'interactive' });
+  const src = document.getElementById('workletSrc').textContent;
+  const url = URL.createObjectURL(new Blob([src], { type: 'application/javascript' }));
+  await ctx.audioWorklet.addModule(url);
+  node = new AudioWorkletNode(ctx, 'controfase', {
+    numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [1],
+    channelCount: 1, channelCountMode: 'explicit', channelInterpretation: 'speakers'
+  });
+  node.port.onmessage = (e) => handleBlock(e.data);
+  node.connect(ctx.destination);
+  if (ctx.state !== 'running') await ctx.resume();
+  pushParams();
+  if (navigator.mediaDevices && navigator.mediaDevices.addEventListener) {
+    navigator.mediaDevices.addEventListener('devicechange', () => invalidateCal('Dispositivo audio cambiato: ricalibra.'));
+  }
+}
+
+const currentW = () => cpolar(st.amp, st.phaseDeg * Math.PI / 180);
+
+function pushParams() {
+  if (!node) return;
+  const w = calOverride ? calOverride : (st.outputOn ? currentW() : ZERO);
+  node.port.postMessage({ type: 'target', freq: st.freq, wr: w.re, wi: w.im });
+}
+
+function setW(w) {
+  st.amp = Math.min(cmag(w), 1);
+  let p = cang(w) * 180 / Math.PI;
+  if (p < 0) p += 360;
+  st.phaseDeg = p;
+  pushParams();
+}
+
+// ---------- azioni ----------
+function setFreq(f) {
+  if (!isFinite(f)) f = 100;
+  f = Math.min(Math.max(f, 10), 1000);
+  st.freq = f;
+  prevOffM = null; dfSm = null; st.estFreq = null;
+  if (st.S && Math.abs(st.freq - st.calFreq) > 1.0) invalidateCal('Frequenza cambiata di oltre 1 Hz: ricalibra.');
+  pushParams();
+  saveSettings();
+}
+
+function setOutput(on) {
+  st.outputOn = on;
+  if (!on && st.autoOn) st.autoOn = false;
+  prevOffM = null; dfSm = null;
+  if (on) st.estFreq = null;
+  pushParams();
+}
+
+function setAuto(on) {
+  if (on) {
+    if (!(st.micOn && st.S && st.calState !== 'running')) {
+      st.autoOn = false;
+      st.message = 'Prima accendi il microfono e calibra.';
+      return;
+    }
+    st.autoOn = true;
+    prevAutoW = null; divergeCount = 0;
+    if (!st.outputOn) { setW(ZERO); setOutput(true); }
+    st.message = 'Cancellazione automatica attiva: il tono si regola da solo per minimizzare il disturbo al microfono.';
+  } else {
+    st.autoOn = false;
+    prevAutoW = null;
+  }
+}
+
+async function setMic(on) {
+  await ensureAudio();
+  if (!on) {
+    if (micSrc) { try { micSrc.disconnect(); } catch (e) {} micSrc = null; }
+    if (micStream) { micStream.getTracks().forEach(t => t.stop()); micStream = null; }
+    if (SIM) node.port.postMessage({ type: 'sim', on: false });
+    st.micOn = false; st.autoOn = false;
+    if (st.calState === 'running') { calOverride = null; st.calState = 'none'; st.calText = 'non calibrato'; pushParams(); }
+    st.level = null; st.total = null; st.estFreq = null; smoothed = null;
+    return;
+  }
+  if (SIM) {
+    node.port.postMessage({ type: 'sim', on: true, gain: 0.6, delay: 0.031, amp: undb(-34), ftrue: 100.037, phase: 1.1, noise: undb(-60) });
+  } else {
+    try {
+      micStream = await navigator.mediaDevices.getUserMedia({
+        audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: 1 }
+      });
+      micSrc = ctx.createMediaStreamSource(micStream);
+      micSrc.connect(node);
+    } catch (e) {
+      st.micOn = false;
+      st.message = 'Microfono non disponibile (' + e.name + '). Controlla il permesso del browser e Impostazioni di Sistema → Privacy e sicurezza → Microfono.';
+      return;
+    }
+  }
+  st.micOn = true;
+  smoothed = null; st.history = [];
+  st.message = 'Microfono attivo. Con l\'uscita spenta aspetta la stima della frequenza, poi salva il riferimento.';
+}
+
+function saveBaseline() {
+  if (st.outputOn || smoothed == null) return;
+  st.baseline = smoothed;
+  st.message = 'Riferimento salvato: ' + fmt(smoothed) + ' dBFS a ' + fmt(st.freq, 3) + ' Hz.';
+}
+
+function startCalibration() {
+  if (!st.micOn) { st.message = 'Accendi prima il microfono.'; return; }
+  setAuto(false);
+  calTestW = cx(Math.max(st.amp, 0.05), 0);
+  calSteps = [
+    { on: false, settle: 5, measure: 8, acc: [] },
+    { on: true, settle: 5, measure: 8, acc: [] },
+    { on: false, settle: 5, measure: 8, acc: [] }
+  ];
+  calIdx = 0;
+  calOverride = ZERO;
+  pushParams();
+  st.calState = 'running'; st.calText = 'misuro il disturbo…';
+  st.message = 'Calibrazione in corso: resta fermo e in silenzio per qualche secondo.';
+}
+
+function invalidateCal(why) {
+  const was = st.S != null || st.calState === 'running';
+  st.S = null; st.pathGainDb = null; st.pathPhaseDeg = null;
+  calOverride = null; st.calState = 'none'; st.calText = 'non calibrato';
+  st.autoOn = false; prevAutoW = null;
+  pushParams();
+  if (was) st.message = why;
+}
+
+// ---------- elaborazione dei blocchi del microfono ----------
+function handleBlock(d) {
+  if (!st.micOn) return;
+  const m = cx(d.re, d.im);
+  const b = { m, rms: d.rms, freq: d.freq, dur: d.dur };
+  const lvl = db(cmag(m));
+  smoothed = smoothed == null ? lvl : smoothed + 0.25 * (lvl - smoothed);
+  st.level = smoothed;
+  st.total = db(d.rms * Math.SQRT2);
+  st.history.push(smoothed);
+  if (st.history.length > HISTORY_LEN) st.history.splice(0, st.history.length - HISTORY_LEN);
+
+  if (st.calState === 'running') calStep(b);
+  else {
+    if (!st.outputOn) estimateFreq(b);
+    if (st.autoOn) adapt(b);
+  }
+  scheduleRender();
+}
+
+function estimateFreq(b) {
+  if (Math.abs(b.freq - st.freq) > 1e-9) { prevOffM = null; return; }
+  if (prevOffM && cmag(prevOffM) > 1e-7 && cmag(b.m) > 1e-7) {
+    const dArg = cang(cmul(b.m, cconj(prevOffM)));
+    const df = dArg / (2 * Math.PI * b.dur);
+    dfSm = dfSm == null ? df : dfSm + 0.08 * (df - dfSm);
+    st.estFreq = b.freq + dfSm;
+  }
+  prevOffM = b.m;
+}
+
+const cmean = (v) => v.length ? cscale(v.reduce(cadd, ZERO), 1 / v.length) : ZERO;
+function blockNoise(v) {
+  if (v.length < 2) return 0;
+  let s = 0;
+  for (let i = 1; i < v.length; i++) { const d = cmag(csub(v[i], v[i - 1])); s += d * d; }
+  return Math.sqrt(s / (v.length - 1) / 2);
+}
+
+function calStep(b) {
+  const step = calSteps[calIdx];
+  if (!step) return;
+  if (step.settle > 0) { step.settle--; return; }
+  step.acc.push(b.m);
+  if (step.acc.length < step.measure) return;
+  calIdx++;
+  if (calIdx >= calSteps.length) { finishCal(); return; }
+  const next = calSteps[calIdx];
+  calOverride = next.on ? calTestW : ZERO;
+  pushParams();
+  st.calText = next.on ? 'tono di prova…' : 'misuro di nuovo…';
+}
+
+function finishCal() {
+  calOverride = null;
+  pushParams();
+  const off1 = cmean(calSteps[0].acc), on = cmean(calSteps[1].acc), off2 = cmean(calSteps[2].acc);
+  const noise = Math.max(blockNoise(calSteps[0].acc), blockNoise(calSteps[2].acc));
+  // disturbo durante il tono di prova: punto di mezzo "geometrico" (compensa la rotazione di fase)
+  const dist = (cmag(off1) > 2 * noise && cmag(off2) > 2 * noise)
+    ? cmul(off1, csqrt(cdiv(off2, off1)))
+    : cscale(cadd(off1, off2), 0.5);
+  const delta = csub(on, dist);
+  if (!(cmag(delta) > 1e-6 && cmag(delta) > 3 * noise)) {
+    st.calState = 'failed'; st.calText = 'tono di prova troppo debole';
+    st.message = 'Calibrazione fallita: al microfono il tono di prova non si distingue. Alza l\'ampiezza (o il volume del Mac) e riprova.';
+    return;
+  }
+  st.S = cdiv(delta, calTestW);
+  st.calFreq = st.freq;
+  st.pathGainDb = db(cmag(st.S));
+  let p = cang(st.S) * 180 / Math.PI; if (p < 0) p += 360;
+  st.pathPhaseDeg = p;
+  st.baseline = db(cmag(dist));
+  st.calState = 'done'; st.calText = 'calibrato';
+  const snr = db(cmag(delta)) - db(cmag(dist));
+  st.message = snr < 0
+    ? 'Calibrato, ma il tono di prova era ' + fmt(-snr, 0) + ' dB sotto il disturbo: se l\'automatico non converge, alza l\'ampiezza e ricalibra.'
+    : 'Calibrato. Ora puoi attivare la cancellazione automatica.';
+}
+
+// Passo adattivo: W ← W − μ·M/S ; inseguimento frequenza dalla rotazione di W.
+function adapt(b) {
+  const S = st.S;
+  if (!S) return;
+  let w = csub(currentW(), cscale(cdiv(b.m, S), st.mu));
+  if (cmag(w) > st.maxAmp) w = cscale(w, st.maxAmp / cmag(w));
+  const present = st.baseline != null && db(cmag(cmul(w, S))) > st.baseline - 20;
+  if (st.track && present && prevAutoW && cmag(w) > 1e-5 && cmag(prevAutoW) > 1e-5) {
+    const dArg = cang(cmul(w, cconj(prevAutoW)));
+    const df = dArg / (2 * Math.PI * b.dur);
+    st.freq = Math.min(Math.max(st.freq + 0.05 * df, st.calFreq - 0.9), st.calFreq + 0.9);
+  }
+  prevAutoW = w;
+  setW(w);
+  if (st.baseline != null && smoothed != null && smoothed > st.baseline + 6) divergeCount++;
+  else divergeCount = 0;
+  if (divergeCount > 30) {
+    setOutput(false);
+    invalidateCal('Il livello saliva invece di scendere: automatico fermato. Ricalibra (magari dopo esserti sistemato a letto).');
+  }
+}
+
+// ---------- interfaccia ----------
+const $ = (id) => document.getElementById(id);
+let renderPending = false;
+function scheduleRender() {
+  if (renderPending) return;
+  renderPending = true;
+  requestAnimationFrame(() => { renderPending = false; render(); });
+}
+
+function render() {
+  $('outSw').checked = st.outputOn;
+  $('outSw').disabled = !ctx || st.calState === 'running';
+  if (document.activeElement !== $('freqIn')) $('freqIn').value = st.freq.toFixed(3);
+  const freqLocked = st.autoOn && st.track;
+  $('freqIn').disabled = freqLocked;
+  document.querySelectorAll('#freqBtns button').forEach(bt => bt.disabled = freqLocked);
+  $('ampIn').value = Math.max(db(st.amp), -60);
+  $('ampIn').disabled = st.autoOn;
+  $('ampVal').textContent = fmt(db(st.amp)) + ' dBFS';
+  $('phIn').value = st.phaseDeg;
+  $('phIn').disabled = st.autoOn;
+  $('phVal').textContent = fmt(st.phaseDeg) + '°';
+  document.querySelectorAll('#phBtns button').forEach(bt => bt.disabled = st.autoOn);
+
+  $('micSw').checked = st.micOn;
+  $('baseVal').textContent = st.baseline == null ? '—' : fmt(st.baseline) + ' dBFS';
+  $('baseBtn').disabled = !st.micOn || st.outputOn || smoothed == null;
+  $('estVal').textContent = st.estFreq == null ? (st.micOn && st.outputOn ? 'spegni l\'uscita' : '—') : '≈ ' + fmt(st.estFreq, 3) + ' Hz';
+  $('useEstBtn').disabled = st.estFreq == null;
+  $('totVal').textContent = st.total == null ? '—' : fmt(st.total) + ' dBFS';
+
+  $('lvlLabel').textContent = 'Livello a ' + fmt(st.freq, 3) + ' Hz';
+  $('lvlVal').innerHTML = st.level == null ? '—' : fmt(st.level) + ' <small>dBFS</small>';
+  const red = (st.baseline != null && st.level != null && st.outputOn) ? st.baseline - st.level : null;
+  $('redVal').innerHTML = red == null ? '—' : fmt(red) + ' <small>dB</small>';
+  $('redVal').style.color = red == null ? '' : (red > 0 ? 'var(--good)' : 'var(--bad)');
+  $('outVal').innerHTML = st.outputOn ? fmt(db(st.amp)) + ' <small>dBFS · ' + fmt(st.phaseDeg, 0) + '°</small>' : 'spento';
+
+  $('calBtn').disabled = !st.micOn || st.calState === 'running';
+  const pill = $('calPill');
+  pill.textContent = st.calText;
+  pill.className = 'pill' + (st.calState === 'done' ? ' ok' : st.calState === 'failed' ? ' err' : st.calState === 'running' ? ' run' : '');
+  $('pathVal').textContent = st.S ? 'percorso ' + fmt(st.pathGainDb) + ' dB, ' + fmt(st.pathPhaseDeg, 0) + '°' : '';
+  $('autoSw').checked = st.autoOn;
+  $('autoSw').disabled = !st.autoOn && !(st.micOn && st.S && st.calState !== 'running');
+  $('trackSw').checked = st.track;
+  $('muIn').value = st.mu;
+  $('muVal').textContent = fmt(st.mu, 2);
+  $('maxIn').value = db(st.maxAmp);
+  $('maxVal').textContent = fmt(db(st.maxAmp)) + ' dBFS';
+
+  $('msg').textContent = st.message;
+  drawHistory();
+}
+
+function drawHistory() {
+  const cv = $('hist');
+  const dpr = window.devicePixelRatio || 1;
+  const w = cv.clientWidth, h = cv.clientHeight;
+  if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(h * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); }
+  const g = cv.getContext('2d');
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  g.clearRect(0, 0, w, h);
+  const v = st.history;
+  const css = getComputedStyle(document.documentElement);
+  if (v.length < 2) {
+    g.fillStyle = css.getPropertyValue('--muted');
+    g.font = '12px -apple-system, system-ui, sans-serif';
+    g.fillText('Andamento del livello (ultimi 30 s)', 10, h / 2 + 4);
+    return;
+  }
+  let lo = Math.min(...v), hi = Math.max(...v);
+  if (st.baseline != null) { lo = Math.min(lo, st.baseline); hi = Math.max(hi, st.baseline); }
+  lo -= 3; hi += 3;
+  const y = (x) => h * (1 - (x - lo) / (hi - lo));
+  const step = w / (HISTORY_LEN - 1);
+  const x0 = w - (v.length - 1) * step;
+  if (st.baseline != null) {
+    g.strokeStyle = css.getPropertyValue('--muted'); g.setLineDash([4, 3]); g.lineWidth = 1;
+    g.beginPath(); g.moveTo(0, y(st.baseline)); g.lineTo(w, y(st.baseline)); g.stroke(); g.setLineDash([]);
+  }
+  g.strokeStyle = css.getPropertyValue('--accent'); g.lineWidth = 1.6;
+  g.beginPath();
+  v.forEach((val, i) => { const px = x0 + i * step; if (i === 0) g.moveTo(px, y(val)); else g.lineTo(px, y(val)); });
+  g.stroke();
+  g.fillStyle = css.getPropertyValue('--muted'); g.font = '11px ui-monospace, Menlo, monospace';
+  g.fillText(fmt(hi - 3, 0) + ' dB', 6, 12);
+  g.fillText(fmt(lo + 3, 0) + ' dB', 6, h - 5);
+}
+
+function makeButtons(containerId, items) {
+  const c = $(containerId);
+  for (const [label, fn] of items) {
+    const b = document.createElement('button');
+    b.textContent = label;
+    b.addEventListener('click', async () => { await ensureAudio(); fn(); render(); });
+    c.appendChild(b);
+  }
+}
+
+function nudgePhase(d) {
+  let p = (st.phaseDeg + d) % 360; if (p < 0) p += 360;
+  st.phaseDeg = p; pushParams(); saveSettings();
+}
+
+function wireUI() {
+  const nudgeF = (d) => setFreq(Math.round((st.freq + d) * 1000) / 1000);
+  makeButtons('freqBtns', [['−1', () => nudgeF(-1)], ['−0,1', () => nudgeF(-0.1)], ['−0,01', () => nudgeF(-0.01)], ['−0,001', () => nudgeF(-0.001)],
+    ['+0,001', () => nudgeF(0.001)], ['+0,01', () => nudgeF(0.01)], ['+0,1', () => nudgeF(0.1)], ['+1', () => nudgeF(1)]]);
+  makeButtons('phBtns', [['−10°', () => nudgePhase(-10)], ['−1°', () => nudgePhase(-1)], ['+1°', () => nudgePhase(1)], ['+10°', () => nudgePhase(10)], ['Inverti (+180°)', () => nudgePhase(180)]]);
+
+  $('startBtn').addEventListener('click', async () => {
+    try {
+      await ensureAudio();
+      $('startOverlay').hidden = true;
+      st.message = 'Audio avviato. Accendi il microfono e mettilo dove appoggi la testa sul cuscino.';
+    } catch (e) {
+      st.message = 'Impossibile avviare l\'audio: ' + e.message;
+    }
+    render();
+  });
+  $('outSw').addEventListener('change', async (e) => { await ensureAudio(); setOutput(e.target.checked); render(); });
+  $('freqIn').addEventListener('change', (e) => { setFreq(parseFloat(String(e.target.value).replace(',', '.'))); render(); });
+  $('ampIn').addEventListener('input', (e) => { st.amp = undb(parseFloat(e.target.value)); pushParams(); saveSettings(); render(); });
+  $('phIn').addEventListener('input', (e) => { st.phaseDeg = parseFloat(e.target.value); pushParams(); saveSettings(); render(); });
+  $('micSw').addEventListener('change', async (e) => { await setMic(e.target.checked); render(); });
+  $('baseBtn').addEventListener('click', () => { saveBaseline(); render(); });
+  $('useEstBtn').addEventListener('click', () => { if (st.estFreq != null) setFreq(Math.round(st.estFreq * 1000) / 1000); render(); });
+  $('calBtn').addEventListener('click', () => { startCalibration(); render(); });
+  $('autoSw').addEventListener('change', (e) => { setAuto(e.target.checked); render(); });
+  $('trackSw').addEventListener('change', (e) => { st.track = e.target.checked; saveSettings(); render(); });
+  $('muIn').addEventListener('input', (e) => { st.mu = parseFloat(e.target.value); saveSettings(); render(); });
+  $('maxIn').addEventListener('input', (e) => { st.maxAmp = undb(parseFloat(e.target.value)); saveSettings(); render(); });
+  window.addEventListener('resize', scheduleRender);
+}
+
+loadSettings();
+wireUI();
+if (SIM) $('simTag').hidden = false;
+render();
+
+// accesso per i test automatici
+window.__controfase = { st, setMic, setFreq, setOutput, setAuto, startCalibration, saveBaseline, ensureAudio };
+</script>
+</body>
+</html>
