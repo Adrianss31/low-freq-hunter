@@ -26,33 +26,41 @@
   [hidden] { display: none !important; }
   html, body { margin: 0; background: var(--bg); color: var(--ink);
     font: 14px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
-  main { max-width: 760px; margin: 0 auto; padding: 22px 18px 40px; }
+  main { max-width: 820px; margin: 0 auto; padding: 20px 18px 40px; }
   header { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
   h1 { font-size: 22px; margin: 0; letter-spacing: -0.01em; }
   h1 span { color: var(--muted); font-weight: 400; font-size: 14px; margin-left: 8px; }
-  .hero { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 14px; }
-  .stat { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
-  .stat .k { color: var(--muted); font-size: 12px; }
-  .stat .v { font: 600 24px/1.2 var(--mono); margin-top: 2px; }
-  .stat .v small { font-size: 13px; font-weight: 400; color: var(--muted); }
+  .top { display: grid; grid-template-columns: 1.2fr 1fr; gap: 12px; margin-bottom: 14px; }
+  .panel { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; }
+  .bigbtn { width: 100%; font-size: 16px; font-weight: 600; padding: 12px; border-radius: 10px; }
+  .status { margin-top: 10px; font-size: 13px; color: var(--muted); min-height: 38px; }
+  .status b { color: var(--ink); font-weight: 600; }
+  .kv { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; font-size: 13px; }
+  .kv .k { color: var(--muted); }
+  .kv .v { font-family: var(--mono); text-align: right; }
   .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 6px 16px 12px; margin-bottom: 14px; }
-  .card h2 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 10px 0 4px; font-weight: 600; }
+  .card h2 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 10px 0 4px; font-weight: 600;
+    display: flex; align-items: center; justify-content: space-between; gap: 8px; }
   .row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-top: 1px solid var(--line); min-height: 44px; flex-wrap: wrap; }
-  .card h2 + .row { border-top: none; }
-  .row > label, .row > .lbl { flex: 0 0 170px; color: var(--ink); }
-  .row .grow { flex: 1 1 200px; display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .card h2 + .row, .card h2 + div > .row:first-child { border-top: none; }
+  .row > label, .row > .lbl { flex: 0 0 190px; }
+  .row .grow { flex: 1 1 220px; display: flex; align-items: center; gap: 10px; min-width: 0; flex-wrap: wrap; }
   .num { font-family: var(--mono); font-variant-numeric: tabular-nums; min-width: 86px; text-align: right; }
   .muted { color: var(--muted); }
+  .small { font-size: 12px; }
   input[type=range] { flex: 1; accent-color: var(--accent); min-width: 120px; }
-  input[type=number] { font: 15px var(--mono); width: 120px; padding: 5px 8px; border-radius: 7px;
+  input[type=number] { font: 14px var(--mono); width: 110px; padding: 4px 8px; border-radius: 7px;
     border: 1px solid var(--line); background: var(--bg); color: var(--ink); text-align: right; }
+  select { font: inherit; font-size: 13px; padding: 5px 8px; border-radius: 7px; border: 1px solid var(--line);
+    background: var(--bg); color: var(--ink); max-width: 100%; min-width: 0; flex: 1 1 200px; }
   button { font: inherit; font-size: 13px; padding: 5px 10px; border-radius: 7px; border: 1px solid var(--line);
-    background: var(--bg); color: var(--ink); cursor: pointer; }
+    background: var(--bg); color: var(--ink); cursor: pointer; white-space: nowrap; }
   button:hover:not(:disabled) { border-color: var(--accent); }
   button:disabled { opacity: 0.45; cursor: default; }
   button.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
-  .btns { display: flex; gap: 4px; flex-wrap: wrap; margin-left: auto; }
-  .switch { position: relative; width: 42px; height: 24px; flex: 0 0 42px; }
+  button.ghost { background: transparent; }
+  .btns { display: flex; gap: 4px; flex-wrap: wrap; }
+  .switch { position: relative; width: 42px; height: 24px; flex: 0 0 42px; display: inline-block; }
   .switch input { opacity: 0; width: 0; height: 0; }
   .switch span { position: absolute; inset: 0; background: var(--track); border-radius: 24px; transition: .15s; cursor: pointer; }
   .switch span::before { content: ""; position: absolute; width: 18px; height: 18px; left: 3px; top: 3px;
@@ -60,25 +68,43 @@
   .switch input:checked + span { background: var(--accent); }
   .switch input:checked + span::before { transform: translateX(18px); }
   .switch input:disabled + span { opacity: .45; cursor: default; }
-  canvas { width: 100%; height: 90px; display: block; border-radius: 8px; background: var(--bg); }
+  canvas { width: 100%; display: block; border-radius: 8px; background: var(--bg); }
+  #spec { height: 170px; }
   .msg { background: var(--card); border: 1px solid var(--line); border-left: 3px solid var(--accent);
-    border-radius: 10px; padding: 10px 14px; color: var(--ink); margin-bottom: 14px; min-height: 42px; }
+    border-radius: 10px; padding: 10px 14px; margin-bottom: 14px; min-height: 42px; }
   .pill { font-size: 12px; padding: 2px 8px; border-radius: 99px; border: 1px solid var(--line); color: var(--muted); white-space: nowrap; }
   .pill.ok { color: var(--good); border-color: var(--good); }
   .pill.err { color: var(--warn); border-color: var(--warn); }
   .pill.run { color: var(--accent); border-color: var(--accent); }
-  details { color: var(--muted); font-size: 13px; }
-  details summary { cursor: pointer; color: var(--ink); padding: 8px 0; }
-  details ol, details ul { padding-left: 20px; margin: 4px 0 10px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { font-size: 12px; padding: 4px 8px; border-radius: 99px; border: 1px solid var(--line); background: var(--bg); }
+  .chip b { font-family: var(--mono); font-weight: 600; }
+  .chip.used { opacity: .5; }
+  .tone { border-top: 1px solid var(--line); padding: 10px 0; }
+  .tone:first-of-type { border-top: none; }
+  .tone .head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; flex: 0 0 10px; }
+  .tone .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 8px; }
+  .tone .stats div { background: var(--bg); border-radius: 8px; padding: 6px 8px; }
+  .tone .stats .k { font-size: 11px; color: var(--muted); }
+  .tone .stats .v { font: 600 15px var(--mono); }
+  .tone details { margin-top: 6px; }
+  .tone details summary { font-size: 12px; color: var(--muted); cursor: pointer; }
+  .tone .hold { font-size: 12px; color: var(--muted); margin-top: 6px; }
+  .empty { color: var(--muted); padding: 10px 0; font-size: 13px; }
+  details.help { color: var(--muted); font-size: 13px; }
+  details.help summary { cursor: pointer; color: var(--ink); padding: 8px 0; }
+  details.help ol, details.help ul { padding-left: 20px; margin: 4px 0 10px; }
   #startOverlay { position: fixed; inset: 0; background: color-mix(in srgb, var(--bg) 88%, transparent);
     display: flex; align-items: center; justify-content: center; z-index: 10; backdrop-filter: blur(3px); }
   #startOverlay .box { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 22px 24px; max-width: 420px; text-align: center; }
   #startOverlay h3 { margin: 0 0 6px; }
   #startOverlay p { color: var(--muted); margin: 0 0 16px; }
   .simtag { color: var(--warn); font-size: 12px; }
-  @media (max-width: 600px) {
-    .hero { grid-template-columns: 1fr; }
+  @media (max-width: 680px) {
+    .top { grid-template-columns: 1fr; }
     .row > label, .row > .lbl { flex-basis: 100%; }
+    .tone .stats { grid-template-columns: repeat(2, 1fr); }
   }
 </style>
 </head>
@@ -86,193 +112,245 @@
 <div id="startOverlay">
   <div class="box">
     <h3>Controfase</h3>
-    <p>Genera un tono e lo mette in controfase con il ronzio, misurando il risultato col microfono.</p>
+    <p>Trova i ronzii a bassa frequenza e li cancella con toni in controfase, verificando il risultato col microfono.</p>
     <button class="primary" id="startBtn">Avvia l'audio</button>
   </div>
 </div>
 
 <main>
   <header>
-    <h1>Controfase <span>cancellazione del ronzio a bassa frequenza</span></h1>
+    <h1>Controfase <span>cancellazione dei ronzi a bassa frequenza</span></h1>
     <span id="simTag" class="simtag" hidden>SIMULAZIONE</span>
   </header>
 
-  <section class="hero">
-    <div class="stat"><div class="k" id="lvlLabel">Livello a 100,000 Hz</div><div class="v" id="lvlVal">—</div></div>
-    <div class="stat"><div class="k">Riduzione</div><div class="v" id="redVal">—</div></div>
-    <div class="stat"><div class="k">Tono in uscita</div><div class="v" id="outVal">spento</div></div>
-  </section>
-
-  <div class="msg" id="msg">Avvia l'audio, poi accendi il microfono e mettilo dove appoggi la testa sul cuscino.</div>
-
-  <section class="card">
-    <h2>Generatore</h2>
-    <div class="row">
-      <label for="outSw">Uscita attiva</label>
-      <div class="grow"><label class="switch"><input type="checkbox" id="outSw"><span></span></label></div>
+  <section class="top">
+    <div class="panel">
+      <button class="primary bigbtn" id="guideBtn">Trova e cancella</button>
+      <div class="status" id="status"></div>
     </div>
-    <div class="row">
-      <label for="freqIn">Frequenza</label>
-      <div class="grow">
-        <input type="number" id="freqIn" step="0.001" min="10" max="1000" value="100.000"> <span class="muted">Hz</span>
+    <div class="panel">
+      <div class="kv">
+        <span class="k">Cancellazione</span><span class="v" id="sAuto">spenta</span>
+        <span class="k">Microfono</span><span class="v" id="sMic">spento</span>
+        <span class="k">Toni attivi</span><span class="v" id="sTones">0</span>
+        <span class="k">Prossimo controllo</span><span class="v" id="sNext">—</span>
       </div>
     </div>
-    <div class="row" style="border-top:none; padding-top:0">
-      <div class="btns" id="freqBtns"></div>
-    </div>
-    <div class="row">
-      <label for="ampIn">Ampiezza</label>
-      <div class="grow"><input type="range" id="ampIn" min="-60" max="0" step="0.1"><span class="num" id="ampVal"></span></div>
-    </div>
-    <div class="row">
-      <label for="phIn">Fase</label>
-      <div class="grow"><input type="range" id="phIn" min="0" max="360" step="0.1"><span class="num" id="phVal"></span></div>
-    </div>
-    <div class="row" style="border-top:none; padding-top:0">
-      <div class="btns" id="phBtns"></div>
-    </div>
   </section>
 
-  <section class="card">
-    <h2>Misura · microfono vicino al cuscino</h2>
-    <div class="row">
-      <label for="micSw">Microfono attivo</label>
-      <div class="grow"><label class="switch"><input type="checkbox" id="micSw"><span></span></label></div>
-    </div>
-    <div class="row">
-      <span class="lbl">Riferimento (uscita spenta)</span>
-      <div class="grow"><span class="num" id="baseVal">—</span><button id="baseBtn">Salva ora</button></div>
-    </div>
-    <div class="row"><canvas id="hist" height="90"></canvas></div>
-    <div class="row">
-      <span class="lbl">Frequenza esatta del disturbo</span>
-      <div class="grow"><span class="num" id="estVal">—</span><button id="useEstBtn">Usa</button></div>
-    </div>
-    <div class="row">
-      <span class="lbl">Livello totale microfono</span>
-      <div class="grow"><span class="num muted" id="totVal">—</span></div>
-    </div>
-  </section>
+  <div class="msg" id="msg"></div>
 
   <section class="card">
-    <h2>Cancellazione automatica</h2>
-    <div class="row">
-      <span class="lbl">Calibrazione percorso</span>
-      <div class="grow"><button id="calBtn">Calibra</button><span class="pill" id="calPill">non calibrato</span><span class="muted" id="pathVal"></span></div>
-    </div>
+    <h2><span>Toni da cancellare</span>
+      <span class="btns">
+        <button id="calAllBtn" class="ghost">Calibra tutti</button>
+        <button id="addToneBtn" class="ghost">+ Aggiungi a mano</button>
+      </span>
+    </h2>
+    <div id="tones"></div>
     <div class="row">
       <label for="autoSw">Cancellazione automatica</label>
-      <div class="grow"><label class="switch"><input type="checkbox" id="autoSw"><span></span></label></div>
+      <div class="grow"><label class="switch"><input type="checkbox" id="autoSw"><span></span></label>
+        <span class="muted small">si regola da sola, poi si ferma quando è stabile</span></div>
     </div>
     <div class="row">
-      <label for="trackSw">Insegui la frequenza</label>
-      <div class="grow"><label class="switch"><input type="checkbox" id="trackSw"><span></span></label></div>
-    </div>
-    <div class="row">
-      <label for="muIn">Velocità di adattamento</label>
-      <div class="grow"><input type="range" id="muIn" min="0.02" max="0.5" step="0.01"><span class="num" id="muVal"></span></div>
-    </div>
-    <div class="row">
-      <label for="maxIn">Volume massimo</label>
-      <div class="grow"><input type="range" id="maxIn" min="-40" max="0" step="0.5"><span class="num" id="maxVal"></span></div>
+      <label for="outSw">Uscita audio</label>
+      <div class="grow"><label class="switch"><input type="checkbox" id="outSw"><span></span></label>
+        <span class="muted small">spegne o riaccende tutti i toni</span></div>
     </div>
   </section>
 
-  <details>
-    <summary>Come si usa</summary>
+  <section class="card">
+    <h2><span>Spettro al microfono</span><button id="scanBtn" class="ghost">Rileva toni</button></h2>
+    <div class="row" style="border-top:none"><canvas id="spec" height="170"></canvas></div>
+    <div class="row"><div class="chips" id="peaks"><span class="muted small">Premi “Rileva toni” per cercare i ronzi presenti (20–500 Hz).</span></div></div>
+  </section>
+
+  <section class="card">
+    <h2><span>Dispositivi</span></h2>
+    <div class="row">
+      <label for="micSel">Microfono</label>
+      <div class="grow"><select id="micSel"></select><label class="switch" title="Microfono attivo"><input type="checkbox" id="micSw"><span></span></label></div>
+    </div>
+    <div class="row" id="outRow">
+      <label for="outSel">Altoparlante</label>
+      <div class="grow"><select id="outSel"></select></div>
+    </div>
+    <div class="row" id="outNote" hidden>
+      <span class="muted small">Questo browser non permette di scegliere l'altoparlante: il suono va sull'uscita di sistema. Per fissarlo usa Chrome (“Installa pagina come app”).</span>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2><span>Impostazioni</span></h2>
+    <div class="row">
+      <label for="holdSel">Quando è stabile</label>
+      <div class="grow">
+        <select id="holdSel">
+          <option value="periodic">spegni il microfono e ricontrolla</option>
+          <option value="always">tieni il microfono sempre acceso</option>
+        </select>
+        <select id="recheckSel">
+          <option value="auto">intervallo automatico</option>
+          <option value="2">ogni 2 min</option>
+          <option value="5">ogni 5 min</option>
+          <option value="10">ogni 10 min</option>
+          <option value="20">ogni 20 min</option>
+          <option value="30">ogni 30 min</option>
+          <option value="0">mai (resta spento)</option>
+        </select>
+      </div>
+    </div>
+    <div class="row">
+      <label for="reactIn">Reattività</label>
+      <div class="grow"><input type="range" id="reactIn" min="0" max="100" step="1"><span class="num" id="reactVal"></span></div>
+    </div>
+    <div class="row">
+      <label for="maxIn">Volume massimo per tono</label>
+      <div class="grow"><input type="range" id="maxIn" min="-40" max="0" step="0.5"><span class="num" id="maxVal"></span></div>
+    </div>
+    <div class="row">
+      <label for="testIn">Livello tono di prova</label>
+      <div class="grow"><input type="range" id="testIn" min="-50" max="-6" step="1"><span class="num" id="testVal"></span></div>
+    </div>
+    <div class="row">
+      <label for="promIn">Sensibilità rilevamento</label>
+      <div class="grow"><input type="range" id="promIn" min="6" max="20" step="1"><span class="num" id="promVal"></span></div>
+    </div>
+  </section>
+
+  <details class="help">
+    <summary>Come funziona</summary>
     <ol>
-      <li>Microfono attivo, uscita spenta. Dopo 15–20 s compare la frequenza esatta del disturbo: premi <b>Usa</b>, poi <b>Salva ora</b>.</li>
-      <li>Ampiezza intorno a −30 dBFS, volume del Mac a metà. Premi <b>Calibra</b> e resta in silenzio ~5 s.</li>
-      <li>Attiva <b>Cancellazione automatica</b>: la riduzione dovrebbe salire in pochi secondi.</li>
-      <li>Se ti sposti molto o sposti oggetti vicino al microfono, ricalibra.</li>
+      <li>Metti il microfono dove appoggi la testa e premi <b>Trova e cancella</b>: ascolta lo spettro, trova i ronzi, ne misura la frequenza esatta, calibra e avvia la cancellazione.</li>
+      <li>Il controllo fa passi grandi quando è lontano e sempre più piccoli vicino al minimo; quando il residuo smette di scendere si <b>ferma</b> (stato “stabile”). Un aggancio di fase continua a seguire le piccole derive di frequenza della sorgente.</li>
+      <li>Se scegli “spegni il microfono e ricontrolla”, quando tutti i toni sono stabili il microfono si chiude; ogni tanto si riapre qualche secondo per verificare e correggere.</li>
+      <li>Se il ronzio cambia o ti sposti, l'app riaggancia da sola; se il livello sale, si ferma e ricalibra.</li>
     </ol>
     <ul>
-      <li>La zona di silenzio è di circa 30–40 cm intorno al microfono; altrove il 100 Hz può aumentare.</li>
-      <li>Serve un altoparlante che arrivi ai 100 Hz, cablato e vicino alla testiera (non Bluetooth).</li>
-      <li>Se la vibrazione arriva dal letto o dal pavimento (via strutturale), un altoparlante non può toglierla.</li>
+      <li>La zona di silenzio è di circa 30–40 cm intorno al microfono; altrove il ronzio può aumentare.</li>
+      <li>Senza microfono l'app non può sapere se il ronzio ha cambiato fase: per questo ricontrolla. La tenuta stimata dipende da quanto “deriva” la sorgente.</li>
+      <li>Con il microfono spento, se il ronzio si ferma (es. la pompa si spegne) il tono resta acceso da solo fino al ricontrollo successivo, che lo spegne. Per sorgenti che si accendono e spengono spesso scegli un intervallo breve o il microfono sempre acceso.</li>
+      <li>Microfono e altoparlante vengono fissati alla prima accensione: collegare cuffie Bluetooth non li cambia. In Safari l'altoparlante segue sempre quello di sistema.</li>
+      <li>Usa un altoparlante cablato vicino alla testiera. Le vibrazioni che arrivano dal letto o dal pavimento non si cancellano con l'aria.</li>
     </ul>
   </details>
 </main>
 
 <script type="text/worklet" id="workletSrc">
+const PROBE = 8;          // Hz: sonde di rumore a ±8 Hz (zeri della finestra di Hann da 0,25 s)
 class ControfaseProcessor extends AudioWorkletProcessor {
   constructor() {
     super();
     this.fs = sampleRate;
-    this.theta = 0;
-    this.freq = 100;
-    this.wr = 0; this.wi = 0; this.tr = 0; this.ti = 0;
-    this.smooth = 1 - Math.exp(-1 / (0.05 * sampleRate));
-    this.blockLen = Math.round(sampleRate * 0.1);
-    this.win = new Float64Array(this.blockLen);
+    this.T = Math.round(sampleRate * 0.25);
+    this.win = new Float64Array(this.T);
     let s = 0;
-    for (let i = 0; i < this.blockLen; i++) {
-      this.win[i] = 0.5 - 0.5 * Math.cos(2 * Math.PI * i / this.blockLen);
-      s += this.win[i];
-    }
+    for (let i = 0; i < this.T; i++) { this.win[i] = 0.5 - 0.5 * Math.cos(2 * Math.PI * i / this.T); s += this.win[i]; }
     this.winSum = s;
-    this.idx = 0; this.accR = 0; this.accI = 0; this.accSq = 0;
-    this.blockFreq = 100;
+    this.idx = 0; this.accSq = 0;
+    this.smooth = 1 - Math.exp(-1 / (0.05 * sampleRate));
+    this.chans = new Map(); this.list = [];
     this.sim = null;
-    this.port.onmessage = (e) => {
-      const d = e.data;
-      if (d.type === 'target') { this.freq = d.freq; this.tr = d.wr; this.ti = d.wi; }
-      else if (d.type === 'sim') { this.setupSim(d); }
-    };
+    this.port.onmessage = (e) => this.onMsg(e.data);
+  }
+  osc(f) { const w = 2 * Math.PI * f / this.fs; return { c: 1, s: 0, cd: Math.cos(w), sd: Math.sin(w) }; }
+  retune(o, f) { const w = 2 * Math.PI * f / this.fs; o.cd = Math.cos(w); o.sd = Math.sin(w); }
+  onMsg(d) {
+    if (d.type === 'set') {
+      let c = this.chans.get(d.id);
+      if (!c) {
+        c = { id: d.id, freq: d.freq, bf: d.freq, o: this.osc(d.freq), op: this.osc(d.freq + PROBE), om: this.osc(d.freq - PROBE),
+              wr: 0, wi: 0, tr: 0, ti: 0, aR: 0, aI: 0, pR: 0, pI: 0, mR: 0, mI: 0 };
+        this.chans.set(d.id, c); this.list = Array.from(this.chans.values());
+      }
+      if (c.freq !== d.freq) { c.freq = d.freq; this.retune(c.o, d.freq); this.retune(c.op, d.freq + PROBE); this.retune(c.om, d.freq - PROBE); }
+      c.tr = d.wr; c.ti = d.wi;
+    } else if (d.type === 'remove') {
+      this.chans.delete(d.id); this.list = Array.from(this.chans.values());
+    } else if (d.type === 'sim') {
+      this.setupSim(d);
+    } else if (d.type === 'simMic') {
+      if (this.sim) {
+        this.sim.mic = d.on;
+        if (d.on && d.jitterMs) this.setDelay(this.sim.delaySec + (Math.random() * 2 - 1) * d.jitterMs / 1000);
+      }
+    } else if (d.type === 'simPump') {
+      if (this.sim && this.sim.dists[d.index]) this.sim.dists[d.index].on = d.on;
+    }
   }
   setupSim(d) {
-    if (!d.on) { this.sim = null; return; }
-    const delay = Math.max(1, Math.round(d.delay * this.fs));
-    this.sim = {
-      g: d.gain, delay, buf: new Float64Array(delay + 1), pos: 0,
-      ad: d.amp, f: d.ftrue, phi: d.phase, noise: d.noise, n: 0
-    };
+    this.sim = { g: d.gain, noise: d.noise, mic: false, delaySec: d.delay,
+      dists: d.dists.map(x => ({ f0: x.f, f: x.f, a: x.amp, ph: x.phase, wander: x.wander, on: true, gate: 1 })) };
+    this.setDelay(d.delay);
+  }
+  setDelay(sec) {
+    const n = Math.max(1, Math.round(sec * this.fs));
+    this.sim.delaySec = sec; this.sim.buf = new Float64Array(n + 1); this.sim.pos = 0;
+  }
+  gauss() { let u = 0, v = 0; while (u === 0) u = Math.random(); v = Math.random(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); }
+  simQuantum(n) {
+    const dt = n / this.fs;
+    for (const d of this.sim.dists) {
+      d.f += -0.02 * (d.f - d.f0) * dt + d.wander * Math.sqrt(dt) * this.gauss();
+      d.gate += ((d.on ? 1 : 0) - d.gate) * Math.min(1, dt / 0.5);
+    }
   }
   simSample(y) {
     const s = this.sim;
     s.buf[s.pos] = y;
-    const rd = (s.pos + 1) % s.buf.length; // campione di 'delay' passi fa
-    const yd = s.buf[rd];
-    s.pos = rd;
-    const t = s.n++ / this.fs;
-    // rumore gaussiano approssimato
-    const nz = (Math.random() + Math.random() + Math.random() - 1.5) * 2 * s.noise;
-    return s.g * yd + s.ad * Math.cos(2 * Math.PI * s.f * t + s.phi) + nz;
+    const rd = (s.pos + 1) % s.buf.length;
+    const yd = s.buf[rd]; s.pos = rd;
+    let x = s.g * yd;
+    for (const d of s.dists) { d.ph += 2 * Math.PI * d.f / this.fs; if (d.ph > 6.283185307179586) d.ph -= 6.283185307179586; x += d.gate * d.a * Math.cos(d.ph); }
+    x += s.noise * this.gauss();
+    return s.mic ? x : 0;
   }
   process(inputs, outputs) {
-    const out = outputs[0];
-    if (!out || !out[0]) return true;
-    const o0 = out[0];
+    const o0 = outputs[0] && outputs[0][0];
+    if (!o0) return true;
+    const o1 = outputs[1] && outputs[1][0];
     const n = o0.length;
     const inp = inputs[0] && inputs[0].length ? inputs[0][0] : null;
-    const twoPi = 2 * Math.PI;
-    const dphi = twoPi * this.freq / this.fs;
+    const L = this.list, sm = this.smooth;
+    if (this.sim) this.simQuantum(n);
     for (let i = 0; i < n; i++) {
-      this.wr += (this.tr - this.wr) * this.smooth;
-      this.wi += (this.ti - this.wi) * this.smooth;
-      const c = Math.cos(this.theta), s = Math.sin(this.theta);
-      const y = this.wr * c - this.wi * s;
+      let y = 0;
+      for (let k = 0; k < L.length; k++) {
+        const c = L[k];
+        c.wr += (c.tr - c.wr) * sm; c.wi += (c.ti - c.wi) * sm;
+        y += c.wr * c.o.c - c.wi * c.o.s;
+      }
       o0[i] = y;
       const x = this.sim ? this.simSample(y) : (inp ? inp[i] : 0);
+      if (o1) o1[i] = x;
       const wx = x * this.win[this.idx];
-      this.accR += wx * c;
-      this.accI -= wx * s;
       this.accSq += x * x;
-      this.idx++;
-      if (this.idx >= this.blockLen) {
-        this.port.postMessage({
-          re: 2 * this.accR / this.winSum, im: 2 * this.accI / this.winSum,
-          rms: Math.sqrt(this.accSq / this.blockLen),
-          freq: this.blockFreq, dur: this.blockLen / this.fs
-        });
-        this.idx = 0; this.accR = 0; this.accI = 0; this.accSq = 0;
-        this.blockFreq = this.freq;
+      for (let k = 0; k < L.length; k++) {
+        const c = L[k], o = c.o, p = c.op, m = c.om;
+        c.aR += wx * o.c; c.aI -= wx * o.s;
+        c.pR += wx * p.c; c.pI -= wx * p.s;
+        c.mR += wx * m.c; c.mI -= wx * m.s;
+        let t = o.c * o.cd - o.s * o.sd; o.s = o.s * o.cd + o.c * o.sd; o.c = t;
+        t = p.c * p.cd - p.s * p.sd; p.s = p.s * p.cd + p.c * p.sd; p.c = t;
+        t = m.c * m.cd - m.s * m.sd; m.s = m.s * m.cd + m.c * m.sd; m.c = t;
       }
-      this.theta += dphi;
-      if (this.theta >= twoPi) this.theta -= twoPi;
+      if (++this.idx >= this.T) this.flush();
     }
-    for (let ch = 1; ch < out.length; ch++) out[ch].set(o0);
+    for (let ch = 1; ch < outputs[0].length; ch++) outputs[0][ch].set(o0);
     return true;
+  }
+  flush() {
+    const k = 2 / this.winSum;
+    const ch = this.list.map(c => {
+      const r = { id: c.id, freq: c.bf, re: c.aR * k, im: c.aI * k, pr: c.pR * k, pi: c.pI * k, mr: c.mR * k, mi: c.mI * k };
+      c.aR = c.aI = c.pR = c.pI = c.mR = c.mI = 0;
+      c.bf = c.freq;
+      for (const o of [c.o, c.op, c.om]) { const g = 1 / Math.hypot(o.c, o.s); o.c *= g; o.s *= g; }
+      return r;
+    });
+    this.port.postMessage({ dur: this.T / this.fs, rms: Math.sqrt(this.accSq / this.T), ch });
+    this.idx = 0; this.accSq = 0;
   }
 }
 registerProcessor('controfase', ControfaseProcessor);
@@ -280,7 +358,7 @@ registerProcessor('controfase', ControfaseProcessor);
 
 <script>
 'use strict';
-// ---------- numeri complessi ----------
+// ================= numeri complessi =================
 const cx = (re, im) => ({ re, im });
 const ZERO = cx(0, 0);
 const cadd = (a, b) => cx(a.re + b.re, a.im + b.im);
@@ -289,43 +367,123 @@ const cmul = (a, b) => cx(a.re * b.re - a.im * b.im, a.re * b.im + a.im * b.re);
 const cscale = (a, k) => cx(a.re * k, a.im * k);
 const cconj = (a) => cx(a.re, -a.im);
 const cmag = (a) => Math.hypot(a.re, a.im);
+const cmag2 = (a) => a.re * a.re + a.im * a.im;
 const cang = (a) => Math.atan2(a.im, a.re);
 const cpolar = (r, t) => cx(r * Math.cos(t), r * Math.sin(t));
-const cdiv = (a, b) => { const d = b.re * b.re + b.im * b.im; return d > 0 ? cx((a.re * b.re + a.im * b.im) / d, (a.im * b.re - a.re * b.im) / d) : ZERO; };
+const cdiv = (a, b) => { const d = cmag2(b); return d > 0 ? cx((a.re * b.re + a.im * b.im) / d, (a.im * b.re - a.re * b.im) / d) : ZERO; };
 const csqrt = (a) => cpolar(Math.sqrt(cmag(a)), cang(a) / 2);
 const db = (x) => 20 * Math.log10(Math.max(x, 1e-9));
+const db2 = (p) => 10 * Math.log10(Math.max(p, 1e-18));
 const undb = (d) => Math.pow(10, d / 20);
-const fmt = (v, d = 1) => v == null ? '—' : v.toLocaleString('it-IT', { minimumFractionDigits: d, maximumFractionDigits: d });
+const fmt = (v, d = 1) => v == null || !isFinite(v) ? '—' : v.toLocaleString('it-IT', { minimumFractionDigits: d, maximumFractionDigits: d });
+const mean = (a) => a.length ? a.reduce((x, y) => x + y, 0) / a.length : 0;
+const clamp = (x, a, b) => Math.min(Math.max(x, a), b);
+const nowS = () => performance.now() / 1000;
+const fmtDur = (s) => s < 90 ? Math.round(s) + ' s' : s < 5400 ? Math.round(s / 60) + ' min' : fmt(s / 3600, 1) + ' h';
 
+// ================= costanti =================
 const SIM = new URLSearchParams(location.search).has('sim');
+const T_BLOCK = 0.25;
+const MAX_CH = 6;
+const MIN_SPACING = 6;           // Hz fra due toni
+const K_CAP = 0.3;               // guadagno massimo del controllo
+const K_MIN = 0.02;              // guadagno minimo: sotto questo il tono è considerato fermo
+const DEPTH = 1e-3;              // 30 dB sotto il ronzio originale: oltre, le oscillazioni non contano
+const COLORS = ['#2f6fed', '#e0812b', '#1f9d57', '#b34fd1', '#d4442e', '#0f9bb0'];
 
-// ---------- stato ----------
+// ================= stato =================
 const st = {
-  outputOn: false, freq: 100, amp: undb(-30), phaseDeg: 0,
-  micOn: false, level: null, total: null, baseline: null, history: [], estFreq: null,
-  calState: 'none', calText: 'non calibrato', S: null, calFreq: 100, pathGainDb: null, pathPhaseDeg: null,
-  autoOn: false, track: true, mu: 0.15, maxAmp: undb(-6),
-  message: 'Avvia l\'audio, poi accendi il microfono e mettilo dove appoggi la testa sul cuscino.'
+  ready: false, micOn: false, micPaused: false, micWaiting: false, outputOn: false, autoOn: false,
+  micId: '', micLabel: '', outId: '', outLabel: '', inputs: [], outputs: [], canSink: false, micActive: '',
+  react: 40, maxAmp: undb(-6), testDb: -26, minProm: 10, holdMode: 'periodic', recheck: 'auto',
+  channels: [], peaks: [], spec: null, specHz: 0, guideText: null, message: '',
+  nextCheck: null, recheckUntil: 0, totalDb: null, settle: 0,
+  recalLog: [], recheckOverrideSec: null
 };
-const HISTORY_LEN = 300;
-let ctx = null, node = null, micStream = null, micSrc = null;
-let calOverride = null, smoothed = null, prevOffM = null, dfSm = null;
-let calSteps = [], calIdx = 0, calTestW = ZERO;
-let prevAutoW = null, divergeCount = 0;
+let ctx = null, node = null, analyser = null, micStream = null, micSrc = null;
+let calSeq = null, scanAcc = null, specTimer = null, recheckTimer = null, nextId = 1;
+let blockWaiters = [];
+let rawDevs = [];
 
-function loadSettings() {
+// reattività 0…100: 0 = calma (più tempo prima di fermarsi), 100 = rapida
+const reactFactor = () => 2.5 - 2 * st.react / 100;   // 2,5 … 0,5
+
+// ================= persistenza =================
+const calKey = () => (SIM ? 'sim' : st.micId + '|' + st.outId);
+function save() {
   try {
-    const s = JSON.parse(localStorage.getItem('controfase') || '{}');
-    for (const k of ['freq', 'amp', 'phaseDeg', 'mu', 'maxAmp', 'track']) if (k in s) st[k] = s[k];
+    localStorage.setItem('controfase2', JSON.stringify({
+      micId: st.micId, micLabel: st.micLabel, outId: st.outId, outLabel: st.outLabel,
+      react: st.react, maxAmp: st.maxAmp, testDb: st.testDb, minProm: st.minProm, holdMode: st.holdMode, recheck: st.recheck,
+      calKey: calKey(),
+      channels: st.channels.map(ch => ({ freq: ch.freq, fint: ch.fint, S: ch.S, W: ch.W, baseline: ch.baseline, calFreq: ch.calFreq, enabled: ch.enabled }))
+    }));
   } catch (e) { /* storage non disponibile */ }
 }
-function saveSettings() {
+function load() {
   try {
-    localStorage.setItem('controfase', JSON.stringify({ freq: st.freq, amp: st.amp, phaseDeg: st.phaseDeg, mu: st.mu, maxAmp: st.maxAmp, track: st.track }));
+    const s = JSON.parse(localStorage.getItem('controfase2') || 'null');
+    if (!s) return;
+    for (const k of ['micId', 'micLabel', 'outId', 'outLabel', 'react', 'maxAmp', 'testDb', 'minProm', 'holdMode', 'recheck']) if (k in s) st[k] = s[k];
+    const sameSetup = s.calKey === calKey();
+    for (const c of s.channels || []) {
+      const ch = newChannel(c.freq);
+      ch.fint = c.fint || c.freq; ch.enabled = c.enabled !== false;
+      if (sameSetup && c.S) { ch.S = c.S; ch.Scal = c.S; ch.W = c.W || ZERO; ch.baseline = c.baseline; ch.calFreq = c.calFreq || c.freq; ch.state = 'ready'; }
+      st.channels.push(ch);
+    }
+    if (st.channels.length) st.message = sameSetup && st.channels.some(c => c.S)
+      ? 'Ho ripreso i toni e la calibrazione della volta scorsa. Accendi il microfono e attiva la cancellazione (o premi Trova e cancella per ripartire da zero).'
+      : 'Ho ripreso i toni della volta scorsa (da ricalibrare).';
   } catch (e) { /* ignora */ }
 }
 
-// ---------- audio ----------
+// ================= canali =================
+function newChannel(freq) {
+  return {
+    id: nextId++, freq, fint: freq, calFreq: freq, enabled: true, color: COLORS[(nextId - 2) % COLORS.length],
+    W: ZERO, calW: null, S: null, baseline: null, state: 'new',
+    sigma2: null, level: null, lastM: null, lastB: null, history: [],
+    Kprev: 0, Mprev: null, prevDh: null, adaptStart: 0, Weff: ZERO, WeffPrev: ZERO, phref: null, pllGrace: 0,
+    Scal: null, Rs: null, best: null, stable: 0, resid: [], lockRef: null, lockedAt: null, divergeN: 0,
+    fintHist: [], holdSec: null, K: 0
+  };
+}
+function addChannel(freq) {
+  if (st.channels.length >= MAX_CH) { st.message = 'Massimo ' + MAX_CH + ' toni.'; return null; }
+  const near = st.channels.find(c => Math.abs(c.freq - freq) < MIN_SPACING);
+  if (near) { st.message = 'C\'è già un tono a ' + fmt(near.freq, 2) + ' Hz: servono almeno ' + MIN_SPACING + ' Hz di distanza.'; return null; }
+  const ch = newChannel(Math.round(freq * 1000) / 1000);
+  st.channels.push(ch);
+  pushCh(ch); save();
+  return ch;
+}
+function removeChannel(ch) {
+  ch.enabled = false; ch.W = ZERO; pushCh(ch);
+  setTimeout(() => { if (node) node.port.postMessage({ type: 'remove', id: ch.id }); }, 300);
+  st.channels = st.channels.filter(c => c !== ch);
+  save();
+}
+const chById = (id) => st.channels.find(c => c.id === id);
+
+function effW(ch) {
+  if (ch.calW) return ch.calW;
+  if (!st.outputOn || !ch.enabled) return ZERO;
+  return ch.W;
+}
+function pushCh(ch) {
+  if (!node) return;
+  const w = effW(ch);
+  node.port.postMessage({ type: 'set', id: ch.id, freq: ch.freq, wr: w.re, wi: w.im });
+}
+const pushAll = () => st.channels.forEach(pushCh);
+
+function setChFreq(ch, f) {
+  ch.freq = clamp(f, 15, 1000);
+  pushCh(ch);
+}
+
+// ================= audio =================
 async function ensureAudio() {
   if (ctx) { if (ctx.state !== 'running') await ctx.resume(); return; }
   ctx = new AudioContext({ latencyHint: 'interactive' });
@@ -333,236 +491,526 @@ async function ensureAudio() {
   const url = URL.createObjectURL(new Blob([src], { type: 'application/javascript' }));
   await ctx.audioWorklet.addModule(url);
   node = new AudioWorkletNode(ctx, 'controfase', {
-    numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [1],
+    numberOfInputs: 1, numberOfOutputs: 2, outputChannelCount: [1, 1],
     channelCount: 1, channelCountMode: 'explicit', channelInterpretation: 'speakers'
   });
-  node.port.onmessage = (e) => handleBlock(e.data);
-  node.connect(ctx.destination);
+  node.port.onmessage = (e) => onBlocks(e.data);
+  node.connect(ctx.destination, 0);
+  analyser = ctx.createAnalyser();
+  analyser.fftSize = 32768;
+  analyser.smoothingTimeConstant = 0;
+  node.connect(analyser, 1);
+  st.specHz = ctx.sampleRate / analyser.fftSize;
+  st.canSink = typeof ctx.setSinkId === 'function';
+  if (st.canSink && st.outId) {
+    try { await ctx.setSinkId(st.outId); } catch (e) { st.message = 'L\'altoparlante scelto (' + (st.outLabel || '?') + ') non è disponibile: uso quello di sistema.'; }
+  }
   if (ctx.state !== 'running') await ctx.resume();
-  pushParams();
-  if (navigator.mediaDevices && navigator.mediaDevices.addEventListener) {
-    navigator.mediaDevices.addEventListener('devicechange', () => invalidateCal('Dispositivo audio cambiato: ricalibra.'));
-  }
-}
-
-const currentW = () => cpolar(st.amp, st.phaseDeg * Math.PI / 180);
-
-function pushParams() {
-  if (!node) return;
-  const w = calOverride ? calOverride : (st.outputOn ? currentW() : ZERO);
-  node.port.postMessage({ type: 'target', freq: st.freq, wr: w.re, wi: w.im });
-}
-
-function setW(w) {
-  st.amp = Math.min(cmag(w), 1);
-  let p = cang(w) * 180 / Math.PI;
-  if (p < 0) p += 360;
-  st.phaseDeg = p;
-  pushParams();
-}
-
-// ---------- azioni ----------
-function setFreq(f) {
-  if (!isFinite(f)) f = 100;
-  f = Math.min(Math.max(f, 10), 1000);
-  st.freq = f;
-  prevOffM = null; dfSm = null; st.estFreq = null;
-  if (st.S && Math.abs(st.freq - st.calFreq) > 1.0) invalidateCal('Frequenza cambiata di oltre 1 Hz: ricalibra.');
-  pushParams();
-  saveSettings();
-}
-
-function setOutput(on) {
-  st.outputOn = on;
-  if (!on && st.autoOn) st.autoOn = false;
-  prevOffM = null; dfSm = null;
-  if (on) st.estFreq = null;
-  pushParams();
-}
-
-function setAuto(on) {
-  if (on) {
-    if (!(st.micOn && st.S && st.calState !== 'running')) {
-      st.autoOn = false;
-      st.message = 'Prima accendi il microfono e calibra.';
-      return;
-    }
-    st.autoOn = true;
-    prevAutoW = null; divergeCount = 0;
-    if (!st.outputOn) { setW(ZERO); setOutput(true); }
-    st.message = 'Cancellazione automatica attiva: il tono si regola da solo per minimizzare il disturbo al microfono.';
-  } else {
-    st.autoOn = false;
-    prevAutoW = null;
-  }
-}
-
-async function setMic(on) {
-  await ensureAudio();
-  if (!on) {
-    if (micSrc) { try { micSrc.disconnect(); } catch (e) {} micSrc = null; }
-    if (micStream) { micStream.getTracks().forEach(t => t.stop()); micStream = null; }
-    if (SIM) node.port.postMessage({ type: 'sim', on: false });
-    st.micOn = false; st.autoOn = false;
-    if (st.calState === 'running') { calOverride = null; st.calState = 'none'; st.calText = 'non calibrato'; pushParams(); }
-    st.level = null; st.total = null; st.estFreq = null; smoothed = null;
-    return;
-  }
   if (SIM) {
-    node.port.postMessage({ type: 'sim', on: true, gain: 0.6, delay: 0.031, amp: undb(-34), ftrue: 100.037, phase: 1.1, noise: undb(-60) });
-  } else {
-    try {
-      micStream = await navigator.mediaDevices.getUserMedia({
-        audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: 1 }
-      });
-      micSrc = ctx.createMediaStreamSource(micStream);
-      micSrc.connect(node);
-    } catch (e) {
-      st.micOn = false;
-      st.message = 'Microfono non disponibile (' + e.name + '). Controlla il permesso del browser e Impostazioni di Sistema → Privacy e sicurezza → Microfono.';
-      return;
+    node.port.postMessage({ type: 'sim', gain: 0.6, delay: 0.031, noise: undb(-62),
+      dists: [{ f: 100.037, amp: undb(-34), phase: 1.1, wander: 0.004 }, { f: 64.21, amp: undb(-40), phase: 0.3, wander: 0.004 }] });
+  }
+  pushAll();
+  if (navigator.mediaDevices && navigator.mediaDevices.addEventListener) {
+    navigator.mediaDevices.addEventListener('devicechange', onDeviceChange);
+  }
+  specTimer = setInterval(pollSpectrum, 250);
+  st.ready = true;
+  await refreshDevices();
+}
+
+async function refreshDevices() {
+  if (SIM || !navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) return;
+  try {
+    const devs = await navigator.mediaDevices.enumerateDevices();
+    rawDevs = devs;
+    const real = (d) => d.deviceId && d.deviceId !== 'default' && d.deviceId !== 'communications';
+    st.inputs = devs.filter(d => d.kind === 'audioinput' && real(d));
+    st.outputs = devs.filter(d => d.kind === 'audiooutput' && real(d));
+  } catch (e) { /* ignora */ }
+}
+
+async function openMic() {
+  await ensureAudio();
+  if (SIM) {
+    node.port.postMessage({ type: 'simMic', on: true, jitterMs: st._simReopened ? 0.4 : 0 });
+    st._simReopened = true;
+    st.micOn = true; st.micPaused = false; st.micWaiting = false; st.settle = 2; st.micActive = 'microfono simulato';
+    return true;
+  }
+  let id = st.micId;
+  if (id) {
+    await refreshDevices();
+    if (!st.inputs.some(d => d.deviceId === id)) {
+      const byLabel = st.inputs.find(d => d.label && d.label === st.micLabel);
+      if (byLabel) { id = st.micId = byLabel.deviceId; save(); }
+      else if (st.inputs.length && st.inputs.every(d => !d.label)) { /* etichette non ancora disponibili: prova comunque */ }
+      else { st.micWaiting = true; st.message = 'Il microfono scelto (' + (st.micLabel || 'sconosciuto') + ') non è collegato: lo attivo appena torna.'; return false; }
     }
   }
-  st.micOn = true;
-  smoothed = null; st.history = [];
-  st.message = 'Microfono attivo. Con l\'uscita spenta aspetta la stima della frequenza, poi salva il riferimento.';
+  const audio = { echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: 1 };
+  if (id) audio.deviceId = { exact: id };
+  try {
+    micStream = await navigator.mediaDevices.getUserMedia({ audio });
+  } catch (e) {
+    st.message = (e.name === 'OverconstrainedError')
+      ? 'Il microfono scelto non è disponibile: scegline un altro.'
+      : 'Microfono non disponibile (' + e.name + '). Controlla il permesso del browser e Impostazioni di Sistema → Privacy e sicurezza → Microfono.';
+    return false;
+  }
+  const track = micStream.getAudioTracks()[0];
+  st.micActive = track.label || 'microfono';
+  track.addEventListener('ended', onMicEnded);
+  micSrc = ctx.createMediaStreamSource(micStream);
+  micSrc.connect(node);
+  st.micOn = true; st.micPaused = false; st.micWaiting = false; st.settle = 2;
+  await refreshDevices();
+  await pinDevices(track);
+  return true;
 }
 
-function saveBaseline() {
-  if (st.outputOn || smoothed == null) return;
-  st.baseline = smoothed;
-  st.message = 'Riferimento salvato: ' + fmt(smoothed) + ' dBFS a ' + fmt(st.freq, 3) + ' Hz.';
+// Fissa microfono e altoparlante in uso: se poi colleghi cuffie Bluetooth, l'app non li cambia.
+async function pinDevices(track) {
+  const pinned = [];
+  if (!st.micId && track) {
+    const s = track.getSettings ? track.getSettings() : {};
+    const dev = st.inputs.find(d => d.deviceId === s.deviceId) || st.inputs.find(d => d.label && d.label === track.label);
+    if (dev) { st.micId = dev.deviceId; st.micLabel = dev.label; pinned.push('microfono “' + dev.label + '”'); }
+  }
+  if (st.canSink && !st.outId && ctx) {
+    const def = rawDevs.find(d => d.kind === 'audiooutput' && d.deviceId === 'default');
+    const name = def && def.label ? def.label.replace(/^[^-]*-\s*/, '') : '';
+    const dev = st.outputs.find(d => d.label && d.label === name);
+    if (dev) {
+      try { await ctx.setSinkId(dev.deviceId); st.outId = dev.deviceId; st.outLabel = dev.label; pinned.push('altoparlante “' + dev.label + '”'); } catch (e) { /* resta il predefinito */ }
+    }
+  }
+  if (pinned.length) {
+    save();
+    st.message = 'Userò sempre ' + pinned.join(' e ') + ', anche se colleghi altri dispositivi (puoi cambiarli in “Dispositivi”).';
+  }
 }
 
-function startCalibration() {
-  if (!st.micOn) { st.message = 'Accendi prima il microfono.'; return; }
-  setAuto(false);
-  calTestW = cx(Math.max(st.amp, 0.05), 0);
-  calSteps = [
-    { on: false, settle: 5, measure: 8, acc: [] },
-    { on: true, settle: 5, measure: 8, acc: [] },
-    { on: false, settle: 5, measure: 8, acc: [] }
-  ];
-  calIdx = 0;
-  calOverride = ZERO;
-  pushParams();
-  st.calState = 'running'; st.calText = 'misuro il disturbo…';
-  st.message = 'Calibrazione in corso: resta fermo e in silenzio per qualche secondo.';
+function closeMic() {
+  if (micSrc) { try { micSrc.disconnect(); } catch (e) {} micSrc = null; }
+  if (micStream) { micStream.getTracks().forEach(t => { t.removeEventListener('ended', onMicEnded); t.stop(); }); micStream = null; }
+  if (SIM && node) node.port.postMessage({ type: 'simMic', on: false });
+  st.micOn = false;
 }
 
-function invalidateCal(why) {
-  const was = st.S != null || st.calState === 'running';
-  st.S = null; st.pathGainDb = null; st.pathPhaseDeg = null;
-  calOverride = null; st.calState = 'none'; st.calText = 'non calibrato';
-  st.autoOn = false; prevAutoW = null;
-  pushParams();
-  if (was) st.message = why;
+function onMicEnded() {
+  closeMic();
+  st.micWaiting = true;
+  st.message = 'Il microfono (' + st.micActive + ') si è scollegato. I toni restano come sono; riattivo il microfono appena torna.';
+  scheduleRender();
 }
 
-// ---------- elaborazione dei blocchi del microfono ----------
-function handleBlock(d) {
-  if (!st.micOn) return;
-  const m = cx(d.re, d.im);
-  const b = { m, rms: d.rms, freq: d.freq, dur: d.dur };
-  const lvl = db(cmag(m));
-  smoothed = smoothed == null ? lvl : smoothed + 0.25 * (lvl - smoothed);
-  st.level = smoothed;
-  st.total = db(d.rms * Math.SQRT2);
-  st.history.push(smoothed);
-  if (st.history.length > HISTORY_LEN) st.history.splice(0, st.history.length - HISTORY_LEN);
-
-  if (st.calState === 'running') calStep(b);
-  else {
-    if (!st.outputOn) estimateFreq(b);
-    if (st.autoOn) adapt(b);
+async function onDeviceChange() {
+  await refreshDevices();
+  if (st.micWaiting && !st.micOn && !st.micPaused) {
+    if (st.inputs.some(d => d.deviceId === st.micId || (d.label && d.label === st.micLabel))) {
+      if (await openMic()) st.message = 'Microfono ' + st.micActive + ' di nuovo attivo.';
+    }
+  }
+  if (st.canSink && st.outId && ctx && ctx.sinkId !== st.outId && st.outputs.some(d => d.deviceId === st.outId)) {
+    try { await ctx.setSinkId(st.outId); st.message = 'Altoparlante ' + st.outLabel + ' di nuovo attivo.'; } catch (e) {}
   }
   scheduleRender();
 }
 
-function estimateFreq(b) {
-  if (Math.abs(b.freq - st.freq) > 1e-9) { prevOffM = null; return; }
-  if (prevOffM && cmag(prevOffM) > 1e-7 && cmag(b.m) > 1e-7) {
-    const dArg = cang(cmul(b.m, cconj(prevOffM)));
-    const df = dArg / (2 * Math.PI * b.dur);
-    dfSm = dfSm == null ? df : dfSm + 0.08 * (df - dfSm);
-    st.estFreq = b.freq + dfSm;
+// ================= blocchi dal worklet =================
+function waitBlocks(n) { return new Promise(res => blockWaiters.push({ n, res })); }
+function tickWaiters() {
+  const keep = [];
+  for (const w of blockWaiters) { if (--w.n <= 0) w.res(); else keep.push(w); }
+  blockWaiters = keep;
+}
+
+function onBlocks(d) {
+  if (!st.micOn) return;
+  st.totalDb = db(d.rms * Math.SQRT2);
+  if (st.settle > 0) { st.settle--; return; }
+  const t = nowS();
+  for (const b of d.ch) {
+    const ch = chById(b.id);
+    if (!ch) continue;
+    const M = cx(b.re, b.im);
+    const n2 = (b.pr * b.pr + b.pi * b.pi + b.mr * b.mr + b.mi * b.mi) / 2;
+    ch.sigma2 = ch.sigma2 == null ? n2 : ch.sigma2 + 0.08 * (n2 - ch.sigma2);
+    const lvl = db(cmag(M));
+    ch.level = ch.level == null ? lvl : ch.level + 0.3 * (lvl - ch.level);
+    ch.history.push(ch.level);
+    if (ch.history.length > 480) ch.history.splice(0, ch.history.length - 480);
+    ch.lastM = M; ch.lastB = b;
+    ch.WeffPrev = ch.Weff; ch.Weff = effW(ch);
   }
-  prevOffM = b.m;
+  if (calSeq) calTick();
+  else for (const ch of st.channels) if (ch.lastB) step(ch, t);
+  holdLogic(t);
+  tickWaiters();
+  scheduleRender();
 }
 
-const cmean = (v) => v.length ? cscale(v.reduce(cadd, ZERO), 1 / v.length) : ZERO;
-function blockNoise(v) {
-  if (v.length < 2) return 0;
-  let s = 0;
-  for (let i = 1; i < v.length; i++) { const d = cmag(csub(v[i], v[i - 1])); s += d * d; }
-  return Math.sqrt(s / (v.length - 1) / 2);
-}
+// Un passo per tono: aggancio di fase + controllo adattivo che si ferma quando è stabile.
+function step(ch, t) {
+  const M = ch.lastM;
+  const s2 = Math.max(ch.sigma2 || 0, 1e-16);
+  const Weff = ch.Weff;
+  const known = ch.S != null;
+  const silent = cmag2(Weff) === 0;
 
-function calStep(b) {
-  const step = calSteps[calIdx];
-  if (!step) return;
-  if (step.settle > 0) { step.settle--; return; }
-  step.acc.push(b.m);
-  if (step.acc.length < step.measure) return;
-  calIdx++;
-  if (calIdx >= calSteps.length) { finishCal(); return; }
-  const next = calSteps[calIdx];
-  calOverride = next.on ? calTestW : ZERO;
-  pushParams();
-  st.calText = next.on ? 'tono di prova…' : 'misuro di nuovo…';
-}
+  // stima del disturbo al microfono (senza il nostro tono)
+  let Dh = null;
+  if (silent) Dh = M;
+  else if (known) Dh = csub(M, cmul(ch.S, Weff));
 
-function finishCal() {
-  calOverride = null;
-  pushParams();
-  const off1 = cmean(calSteps[0].acc), on = cmean(calSteps[1].acc), off2 = cmean(calSteps[2].acc);
-  const noise = Math.max(blockNoise(calSteps[0].acc), blockNoise(calSteps[2].acc));
-  // disturbo durante il tono di prova: punto di mezzo "geometrico" (compensa la rotazione di fase)
-  const dist = (cmag(off1) > 2 * noise && cmag(off2) > 2 * noise)
-    ? cmul(off1, csqrt(cdiv(off2, off1)))
-    : cscale(cadd(off1, off2), 0.5);
-  const delta = csub(on, dist);
-  if (!(cmag(delta) > 1e-6 && cmag(delta) > 3 * noise)) {
-    st.calState = 'failed'; st.calText = 'tono di prova troppo debole';
-    st.message = 'Calibrazione fallita: al microfono il tono di prova non si distingue. Alza l\'ampiezza (o il volume del Mac) e riprova.';
+  // --- PLL: tiene costante la fase del disturbo rispetto al nostro oscillatore ---
+  // (solo se il ronzio c'è davvero: se la sorgente si ferma, la frequenza resta dov'è)
+  const basePow0 = ch.baseline != null ? Math.pow(10, ch.baseline / 10) : 0;
+  if (Dh && cmag2(Dh) > Math.max(4 * s2, 0.01 * basePow0) && ch.enabled) {
+    // in acquisizione (tono non ancora calibrato) aggancio prima la frequenza dalla rotazione del fasore
+    if (!known && ch.prevDh && cmag2(ch.prevDh) > 4 * s2) {
+      const dphi = cang(cmul(Dh, cconj(ch.prevDh)));
+      ch.fint = clamp(ch.fint + 0.3 * dphi / (2 * Math.PI * T_BLOCK), ch.calFreq - 1.5, ch.calFreq + 1.5);
+    }
+    if (ch.phref == null) ch.phref = cang(Dh);
+    const e = cang(cmul(Dh, cpolar(1, -ch.phref)));
+    // guadagni dell'aggancio in base al rapporto segnale/rumore: stretto se il ronzio è netto, morbido se è rumoroso
+    const snrDb = db2(cmag2(Dh) / s2);
+    ch.snrDb = ch.snrDb == null ? snrDb : ch.snrDb + 0.1 * (snrDb - ch.snrDb);
+    const kp = clamp(0.15 + 0.35 * (ch.snrDb - 10) / 20, 0.15, 0.5);
+    const ki = ch.pllGrace > 0 ? 0 : kp * kp / 3;
+    ch.fint = clamp(ch.fint + ki * e / (2 * Math.PI * T_BLOCK), ch.calFreq - 1.5, ch.calFreq + 1.5);
+    setChFreq(ch, ch.fint + kp * e / (2 * Math.PI * T_BLOCK));
+  } else if (Math.abs(ch.freq - ch.fint) > 1e-9) {
+    setChFreq(ch, ch.fint);
+  }
+  ch.prevDh = Dh;
+  if (ch.pllGrace > 0) ch.pllGrace--;
+  ch.fintHist.push({ t, f: ch.fint });
+  while (ch.fintHist.length && ch.fintHist[0].t < t - 180) ch.fintHist.shift();
+
+  if (!st.autoOn || !known || !ch.enabled) { ch.Mprev = null; return; }
+  if (ch.state !== 'adapting' && ch.state !== 'locked') return;
+
+  const M2 = cmag2(M);
+  ch.resid.push(M2);
+  if (ch.resid.length > 160) ch.resid.shift();
+  // residuo medio (potenza) e miglior residuo recente (con lenta dimenticanza)
+  ch.Rs = ch.Rs == null ? M2 : ch.Rs + 0.25 * (M2 - ch.Rs);
+  ch.best = ch.best == null ? ch.Rs : Math.min(ch.best * 1.01, ch.Rs);
+  // pavimento: il meglio ottenuto, ma mai sotto il rumore né oltre 30 dB sotto il ronzio originale
+  // (le oscillazioni più in basso di così non si sentono e non devono far ripartire il controllo)
+  const basePow = ch.baseline != null ? Math.pow(10, ch.baseline / 10) : 0;
+  const floor = Math.max(ch.best, 2 * s2, basePow * DEPTH);
+
+  if (ch.state === 'locked') {
+    if (ch.pllGrace > 0) return;  // dopo un ricontrollo: lascia che l'aggancio di fase riallinei
+    const recent = mean(ch.resid.slice(-8));
+    if (recent > 4 * Math.max(ch.lockRef || 0, 2 * s2, basePow * DEPTH)) {
+      ch.state = 'adapting'; ch.K = K_CAP; ch.stable = 0; ch.Mprev = null; ch.divergeN = 0; ch.nUnlock = (ch.nUnlock || 0) + 1;
+      ch.best = ch.Rs = recent;
+      st.message = 'Tono ' + fmt(ch.freq, 2) + ' Hz: il ronzio è cambiato, riaggancio.';
+    }
     return;
   }
-  st.S = cdiv(delta, calTestW);
-  st.calFreq = st.freq;
-  st.pathGainDb = db(cmag(st.S));
-  let p = cang(st.S) * 180 / Math.PI; if (p < 0) p += 360;
-  st.pathPhaseDeg = p;
-  st.baseline = db(cmag(dist));
-  st.calState = 'done'; st.calText = 'calibrato';
-  const snr = db(cmag(delta)) - db(cmag(dist));
-  st.message = snr < 0
-    ? 'Calibrato, ma il tono di prova era ' + fmt(-snr, 0) + ' dB sotto il disturbo: se l\'automatico non converge, alza l\'ampiezza e ricalibra.'
-    : 'Calibrato. Ora puoi attivare la cancellazione automatica.';
+
+  // correzione del percorso altoparlante→microfono dal guadagno osservato del ciclo
+  // (solo con passi grandi e residuo ben sopra il minimo, entro ±60° e ±6 dB dalla calibrazione)
+  if (ch.Mprev && ch.Kprev >= 0.15 && cmag2(ch.Mprev) > 16 * floor) {
+    const g = cscale(csub(cx(1, 0), cdiv(M, ch.Mprev)), 1 / ch.Kprev);
+    if (cmag(csub(g, cx(1, 0))) < 0.8) {
+      const Snew = cmul(ch.S, cadd(cx(1, 0), cscale(csub(g, cx(1, 0)), 0.2)));
+      const rel = cdiv(Snew, ch.Scal);
+      if (Math.abs(cang(rel)) < Math.PI / 3 && Math.abs(db(cmag(rel))) < 6) ch.S = Snew;
+    }
+  }
+
+  // --- guadagno a "raffreddamento": grande quando il residuo sale, sempre più piccolo mentre migliora ---
+  if (ch.Rs > 4 * floor) ch.K = K_CAP;                 // il residuo è salito: si riparte decisi
+  else ch.K = Math.max(K_MIN, ch.K * 0.95);
+  const K = ch.K;
+  let W = csub(ch.W, cscale(cdiv(M, ch.S), K));
+  if (cmag(W) > st.maxAmp) W = cscale(W, st.maxAmp / cmag(W));
+  ch.W = W; ch.Mprev = M; ch.Kprev = K;
+  pushCh(ch);
+
+  // --- quando fermarsi: passo al minimo e residuo che non migliora più ---
+  ch.stable = (K <= K_MIN * 1.01 && ch.Rs <= 2.5 * floor) ? (ch.stable || 0) + 1 : 0;
+  if (ch.stable >= Math.round(24 * reactFactor())) {
+    ch.state = 'locked'; ch.lockRef = Math.max(ch.Rs, ch.best); ch.lockedAt = t; ch.Kprev = 0; ch.nLock = (ch.nLock || 0) + 1;
+    updateHoldEstimate(ch);
+  }
+
+  // --- protezione: se il livello sale invece di scendere ---
+  if (ch.baseline != null && ch.level > ch.baseline + 6) ch.divergeN++; else ch.divergeN = 0;
+  if (ch.divergeN > 32) {
+    ch.W = ZERO; ch.state = 'failed'; ch.divergeN = 0; pushCh(ch);
+    autoRecalibrate(ch);
+  }
 }
 
-// Passo adattivo: W ← W − μ·M/S ; inseguimento frequenza dalla rotazione di W.
-function adapt(b) {
-  const S = st.S;
-  if (!S) return;
-  let w = csub(currentW(), cscale(cdiv(b.m, S), st.mu));
-  if (cmag(w) > st.maxAmp) w = cscale(w, st.maxAmp / cmag(w));
-  const present = st.baseline != null && db(cmag(cmul(w, S))) > st.baseline - 20;
-  if (st.track && present && prevAutoW && cmag(w) > 1e-5 && cmag(prevAutoW) > 1e-5) {
-    const dArg = cang(cmul(w, cconj(prevAutoW)));
-    const df = dArg / (2 * Math.PI * b.dur);
-    st.freq = Math.min(Math.max(st.freq + 0.05 * df, st.calFreq - 0.9), st.calFreq + 0.9);
+function updateHoldEstimate(ch) {
+  // modello: la frequenza della sorgente fa una "passeggiata casuale"; ne stimo l'intensità dagli
+  // scarti a 5 s della frequenza agganciata, poi calcolo dopo quanto la fase scivola in media di ~30°
+  const t0 = Math.max(nowS() - 180, (ch.adaptStart || 0) + 15);
+  const h = ch.fintHist.filter(x => x.t > t0);
+  if (h.length < 60) { ch.holdSec = null; return; }
+  let sum = 0, n = 0, j = 0;
+  for (let i = 0; i < h.length; i++) {
+    while (j < h.length && h[j].t < h[i].t + 5) j++;
+    if (j >= h.length) break;
+    const d = h[j].f - h[i].f; sum += d * d; n++;
   }
-  prevAutoW = w;
-  setW(w);
-  if (st.baseline != null && smoothed != null && smoothed > st.baseline + 6) divergeCount++;
-  else divergeCount = 0;
-  if (divergeCount > 30) {
+  if (n < 10) { ch.holdSec = null; return; }
+  const sw2 = Math.max(sum / n / 5, 1e-9);           // Hz²/s
+  const phiMax = 30 * Math.PI / 180;
+  ch.holdSec = clamp(Math.cbrt(3 * phiMax * phiMax / (4 * Math.PI * Math.PI * sw2)), 5, 7200);
+}
+
+function autoRecalibrate(ch) {
+  const t = nowS();
+  st.recalLog = st.recalLog.filter(x => x > t - 600);
+  if (st.recalLog.length >= 3) {
+    st.message = 'Tono ' + fmt(ch.freq, 2) + ' Hz: il livello saliva e ho già ricalibrato più volte. Fermato: controlla microfono e altoparlante.';
+    return;
+  }
+  st.recalLog.push(t);
+  st.message = 'Tono ' + fmt(ch.freq, 2) + ' Hz: il livello saliva, ricalibro da solo.';
+  if (!calSeq) calibrate([ch]).then(() => { if (ch.S && st.autoOn) startAdapting(ch); });
+}
+
+// ================= calibrazione =================
+const CAL_SETTLE = 2, CAL_MEASURE = 8, CAL_PH = ['off1', 'on', 'off2'];
+function calibrate(chs) {
+  chs = chs.filter(ch => ch.enabled);
+  if (!chs.length || !st.micOn) return Promise.resolve(false);
+  return new Promise(resolve => {
+    calSeq = { chs, phase: 0, count: 0, acc: chs.map(() => ({ off1: [], on: [], off2: [] })), noise: chs.map(() => []), resolve };
+    for (const ch of chs) { ch.state = 'calibrating'; ch.calW = ZERO; ch.freq = ch.fint; pushCh(ch); }
+    scheduleRender();
+  });
+}
+function calTick() {
+  const c = calSeq;
+  c.count++;
+  if (c.count > CAL_SETTLE) c.chs.forEach((ch, i) => { c.acc[i][CAL_PH[c.phase]].push(ch.lastM); if (c.phase !== 1) c.noise[i].push(ch.sigma2); });
+  if (c.count < CAL_SETTLE + CAL_MEASURE) return;
+  c.phase++; c.count = 0;
+  if (c.phase >= 3) { finishCal(); return; }
+  const test = cx(undb(st.testDb), 0);
+  c.chs.forEach(ch => { ch.calW = CAL_PH[c.phase] === 'on' ? test : ZERO; pushCh(ch); });
+}
+function cmean(v) { return v.length ? cscale(v.reduce(cadd, ZERO), 1 / v.length) : ZERO; }
+function finishCal() {
+  const c = calSeq; calSeq = null;
+  const test = cx(undb(st.testDb), 0);
+  let okAll = true;
+  c.chs.forEach((ch, i) => {
+    ch.calW = null;
+    const a = c.acc[i];
+    const off1 = cmean(a.off1), on = cmean(a.on), off2 = cmean(a.off2);
+    const noise = Math.sqrt(Math.max(mean(c.noise[i]), 1e-18) / CAL_MEASURE);
+    const dist = (cmag(off1) > 3 * noise && cmag(off2) > 3 * noise) ? cmul(off1, csqrt(cdiv(off2, off1))) : cscale(cadd(off1, off2), 0.5);
+    const delta = csub(on, dist);
+    if (!(cmag(delta) > 4 * noise && cmag(delta) > 1e-7)) {
+      ch.state = 'failed'; ch.S = null; okAll = false;
+      pushCh(ch);
+      return;
+    }
+    ch.S = cdiv(delta, test); ch.Scal = ch.S;
+    ch.calFreq = ch.freq; ch.fint = ch.freq;
+    ch.baseline = db(cmag(dist));
+    let W0 = cscale(cdiv(dist, ch.S), -1);
+    if (cmag(W0) > st.maxAmp) W0 = cscale(W0, st.maxAmp / cmag(W0));
+    ch.W = W0;
+    ch.phref = null; ch.state = 'ready';
+    pushCh(ch);
+  });
+  st.message = okAll
+    ? 'Calibrazione riuscita.'
+    : 'Per alcuni toni il tono di prova non si sentiva al microfono: alza il “livello tono di prova” o il volume del Mac e ricalibra.';
+  save();
+  c.resolve(okAll);
+}
+
+// ================= automatico, pausa del microfono =================
+function startAdapting(ch) {
+  ch.state = 'adapting'; ch.stable = 0; ch.resid = []; ch.Mprev = null; ch.Kprev = 0; ch.divergeN = 0; ch.adaptStart = nowS();
+  ch.K = K_CAP; ch.Rs = null; ch.best = null;
+  if (!ch.Scal) ch.Scal = ch.S;
+}
+function setAuto(on) {
+  if (on) {
+    const ready = st.channels.filter(ch => ch.enabled && ch.S);
+    if (!ready.length) { st.autoOn = false; st.message = 'Prima serve almeno un tono calibrato (usa “Trova e cancella”).'; return false; }
+    if (!st.micOn && !st.micPaused) { st.autoOn = false; st.message = 'Accendi il microfono.'; return false; }
+    st.autoOn = true;
+    ready.forEach(startAdapting);
+    setOutput(true);
+    st.message = 'Cancellazione automatica attiva.';
+  } else {
+    st.autoOn = false;
+    st.channels.forEach(ch => { if (ch.state === 'adapting' || ch.state === 'locked') ch.state = ch.S ? 'ready' : 'new'; });
+    clearRecheck();
+    if (st.micPaused) { st.micPaused = false; }
+    save();
+  }
+  return true;
+}
+function setOutput(on) {
+  st.outputOn = on;
+  if (!on && st.autoOn) setAuto(false);
+  pushAll();
+}
+
+function clearRecheck() { if (recheckTimer) clearTimeout(recheckTimer); recheckTimer = null; st.nextCheck = null; }
+
+function recheckInterval() {
+  if (st.recheckOverrideSec) return st.recheckOverrideSec;
+  if (st.recheck === '0') return null;
+  if (st.recheck !== 'auto') return parseFloat(st.recheck) * 60;
+  const hs = st.channels.filter(ch => ch.enabled && ch.S).map(ch => ch.holdSec || 240);
+  return clamp(0.5 * Math.min(...hs), 30, 600);
+}
+
+function holdLogic(t) {
+  if (st.holdMode !== 'periodic' || !st.autoOn || calSeq || st.guideText) return;
+  const act = st.channels.filter(ch => ch.enabled && ch.S);
+  if (!act.length || !st.micOn) return;
+  if (t < st.recheckUntil) return;
+  if (!act.every(ch => ch.state === 'locked')) return;
+  // tutti stabili: freno la frequenza al valore medio e spengo il microfono
+  act.forEach(ch => { setChFreq(ch, ch.fint); updateHoldEstimate(ch); });
+  closeMic();
+  st.micPaused = true;
+  const iv = recheckInterval();
+  clearRecheck();
+  if (iv) {
+    st.nextCheck = t + iv;
+    recheckTimer = setTimeout(recheck, iv * 1000);
+    st.message = 'Tutto stabile: microfono spento. Ricontrollo tra ' + fmtDur(iv) + '.';
+  } else {
+    st.message = 'Tutto stabile: microfono spento (nessun ricontrollo automatico).';
+  }
+  save();
+}
+
+async function recheck() {
+  recheckTimer = null; st.nextCheck = null;
+  if (!st.micPaused || !st.autoOn) return;
+  const ok = await openMic();
+  if (!ok) {
+    st.micPaused = true;
+    const iv = recheckInterval() || 300;
+    st.nextCheck = nowS() + iv; recheckTimer = setTimeout(recheck, iv * 1000);
+    scheduleRender();
+    return;
+  }
+  st.recheckUntil = nowS() + 0.5 + 10;          // ~10 s di verifica
+  st.channels.forEach(ch => { if (ch.state === 'locked') { ch.pllGrace = 24; ch.resid = []; } });
+  st.message = 'Ricontrollo in corso…';
+  scheduleRender();
+}
+
+// ================= spettro e rilevamento =================
+let specBuf = null;
+function pollSpectrum() {
+  if (!analyser || !st.micOn) return;
+  if (!specBuf) specBuf = new Float32Array(analyser.frequencyBinCount);
+  analyser.getFloatFrequencyData(specBuf);
+  const kMax = Math.min(specBuf.length - 1, Math.ceil(520 / st.specHz));
+  if (!st.spec) st.spec = new Float32Array(kMax + 1).fill(-140);
+  for (let k = 0; k <= kMax; k++) {
+    const v = isFinite(specBuf[k]) ? specBuf[k] : -140;
+    st.spec[k] = st.spec[k] + 0.35 * (v - st.spec[k]);
+  }
+  if (scanAcc) {
+    if (!scanAcc.sum) scanAcc.sum = new Float64Array(kMax + 1);
+    for (let k = 0; k <= kMax; k++) scanAcc.sum[k] += Math.pow(10, (isFinite(specBuf[k]) ? specBuf[k] : -140) / 10);
+    if (++scanAcc.n >= scanAcc.need) {
+      const peaks = detectPeaks(scanAcc.sum, scanAcc.n);
+      st.peaks = peaks;
+      const r = scanAcc.res; scanAcc = null; r(peaks);
+    }
+  }
+  drawSpectrum();
+}
+
+function scan(sec) { return new Promise(res => { scanAcc = { sum: null, n: 0, need: Math.round(sec / 0.25), res }; }); }
+
+function detectPeaks(sum, n) {
+  const hz = st.specHz;
+  const d = Array.from(sum, v => 10 * Math.log10(v / n + 1e-20));
+  const k0 = Math.ceil(20 / hz), k1 = Math.min(d.length - 3, Math.floor(500 / hz));
+  const W = Math.round(12 / hz), out = [];
+  for (let k = Math.max(k0, 3); k <= k1; k++) {
+    if (!(d[k] > d[k - 1] && d[k] >= d[k + 1] && d[k] > d[k - 2] && d[k] >= d[k + 2])) continue;
+    const ref = [];
+    for (let j = k - W; j <= k + W; j++) if (j >= 0 && j < d.length && Math.abs(j - k) > 3) ref.push(d[j]);
+    ref.sort((a, b) => a - b);
+    const prom = d[k] - ref[Math.floor(ref.length / 2)];
+    if (prom < st.minProm) continue;
+    const a = d[k - 1], b = d[k], c = d[k + 1];
+    const den = a - 2 * b + c;
+    const delta = den !== 0 ? clamp(0.5 * (a - c) / den, -0.5, 0.5) : 0;
+    out.push({ f: (k + delta) * hz, level: b, prom });
+  }
+  out.sort((x, y) => y.prom - x.prom);
+  const merged = [];
+  for (const p of out) if (!merged.some(m => Math.abs(m.f - p.f) < 3)) merged.push(p);
+  return merged.slice(0, 8);
+}
+
+async function scanAndShow() {
+  await ensureAudio();
+  if (!st.micOn && !(await openMic())) { render(); return; }
+  st.guideText = 'Ascolto lo spettro (6 s)…'; render();
+  await scan(6);
+  st.guideText = null;
+  st.message = st.peaks.length ? 'Toni trovati: tocca quelli da cancellare.' : 'Nessun tono evidente. Prova ad abbassare la “sensibilità rilevamento”.';
+  render();
+}
+
+// ================= procedura guidata =================
+async function guided() {
+  if (st.guideText) return;
+  try {
+    await ensureAudio();
+    st.guideText = 'Preparo…'; render();
+    if (st.micPaused) { clearRecheck(); st.micPaused = false; }
+    if (!st.micOn && !(await openMic())) throw new Error(st.message);
+    setAuto(false);
     setOutput(false);
-    invalidateCal('Il livello saliva invece di scendere: automatico fermato. Ricalibra (magari dopo esserti sistemato a letto).');
+    await waitBlocks(3);
+
+    st.guideText = 'Ascolto lo spettro (8 s)…'; render();
+    const peaks = await scan(8);
+    const fresh = peaks.filter(p => !st.channels.some(ch => Math.abs(ch.freq - p.f) < MIN_SPACING));
+    for (const p of fresh.slice(0, Math.max(0, 3 - st.channels.filter(c => c.enabled).length))) addChannel(p.f);
+    const chs = st.channels.filter(ch => ch.enabled);
+    if (!chs.length) { st.message = 'Non ho trovato ronzi evidenti. Abbassa la “sensibilità rilevamento” o aggiungi un tono a mano.'; return; }
+
+    st.guideText = 'Misuro la frequenza esatta di ' + chs.map(c => fmt(c.freq, 1) + ' Hz').join(', ') + ' (12 s)…'; render();
+    chs.forEach(ch => { ch.phref = null; ch.fint = ch.freq; ch.calFreq = ch.freq; ch.S = null; ch.state = 'new'; });
+    await waitBlocks(48);
+
+    st.guideText = 'Calibro altoparlante → microfono (8 s)…'; render();
+    await calibrate(chs);
+    if (!chs.some(ch => ch.S)) { st.message = 'Calibrazione non riuscita: alza il “livello tono di prova” o il volume e riprova.'; return; }
+
+    st.guideText = null;
+    setAuto(true);
+    st.message = 'Cancellazione avviata su ' + chs.filter(c => c.S).map(c => fmt(c.freq, 2) + ' Hz').join(', ') + '. Si stabilizza in poche decine di secondi.';
+  } catch (e) {
+    st.message = 'Procedura interrotta: ' + e.message;
+  } finally {
+    st.guideText = null;
+    render();
   }
 }
 
-// ---------- interfaccia ----------
+// ================= interfaccia =================
 const $ = (id) => document.getElementById(id);
 let renderPending = false;
 function scheduleRender() {
@@ -571,140 +1019,297 @@ function scheduleRender() {
   requestAnimationFrame(() => { renderPending = false; render(); });
 }
 
-function render() {
-  $('outSw').checked = st.outputOn;
-  $('outSw').disabled = !ctx || st.calState === 'running';
-  if (document.activeElement !== $('freqIn')) $('freqIn').value = st.freq.toFixed(3);
-  const freqLocked = st.autoOn && st.track;
-  $('freqIn').disabled = freqLocked;
-  document.querySelectorAll('#freqBtns button').forEach(bt => bt.disabled = freqLocked);
-  $('ampIn').value = Math.max(db(st.amp), -60);
-  $('ampIn').disabled = st.autoOn;
-  $('ampVal').textContent = fmt(db(st.amp)) + ' dBFS';
-  $('phIn').value = st.phaseDeg;
-  $('phIn').disabled = st.autoOn;
-  $('phVal').textContent = fmt(st.phaseDeg) + '°';
-  document.querySelectorAll('#phBtns button').forEach(bt => bt.disabled = st.autoOn);
+const STATE_TXT = { new: ['da calibrare', ''], calibrating: ['calibrazione…', 'run'], ready: ['calibrato', ''],
+  adapting: ['ricerca', 'run'], locked: ['stabile', 'ok'], failed: ['non riuscito', 'err'] };
 
-  $('micSw').checked = st.micOn;
-  $('baseVal').textContent = st.baseline == null ? '—' : fmt(st.baseline) + ' dBFS';
-  $('baseBtn').disabled = !st.micOn || st.outputOn || smoothed == null;
-  $('estVal').textContent = st.estFreq == null ? (st.micOn && st.outputOn ? 'spegni l\'uscita' : '—') : '≈ ' + fmt(st.estFreq, 3) + ' Hz';
-  $('useEstBtn').disabled = st.estFreq == null;
-  $('totVal').textContent = st.total == null ? '—' : fmt(st.total) + ' dBFS';
-
-  $('lvlLabel').textContent = 'Livello a ' + fmt(st.freq, 3) + ' Hz';
-  $('lvlVal').innerHTML = st.level == null ? '—' : fmt(st.level) + ' <small>dBFS</small>';
-  const red = (st.baseline != null && st.level != null && st.outputOn) ? st.baseline - st.level : null;
-  $('redVal').innerHTML = red == null ? '—' : fmt(red) + ' <small>dB</small>';
-  $('redVal').style.color = red == null ? '' : (red > 0 ? 'var(--good)' : 'var(--bad)');
-  $('outVal').innerHTML = st.outputOn ? fmt(db(st.amp)) + ' <small>dBFS · ' + fmt(st.phaseDeg, 0) + '°</small>' : 'spento';
-
-  $('calBtn').disabled = !st.micOn || st.calState === 'running';
-  const pill = $('calPill');
-  pill.textContent = st.calText;
-  pill.className = 'pill' + (st.calState === 'done' ? ' ok' : st.calState === 'failed' ? ' err' : st.calState === 'running' ? ' run' : '');
-  $('pathVal').textContent = st.S ? 'percorso ' + fmt(st.pathGainDb) + ' dB, ' + fmt(st.pathPhaseDeg, 0) + '°' : '';
-  $('autoSw').checked = st.autoOn;
-  $('autoSw').disabled = !st.autoOn && !(st.micOn && st.S && st.calState !== 'running');
-  $('trackSw').checked = st.track;
-  $('muIn').value = st.mu;
-  $('muVal').textContent = fmt(st.mu, 2);
-  $('maxIn').value = db(st.maxAmp);
-  $('maxVal').textContent = fmt(db(st.maxAmp)) + ' dBFS';
-
-  $('msg').textContent = st.message;
-  drawHistory();
+function toneState(ch) {
+  if (ch.state === 'adapting') return ch.K > 0.1 ? ['ricerca', 'run'] : ['affinamento', 'run'];
+  if (ch.state === 'locked' && st.micPaused) return ['stabile · mic spento', 'ok'];
+  return STATE_TXT[ch.state] || [ch.state, ''];
 }
 
-function drawHistory() {
-  const cv = $('hist');
+function buildTone(ch) {
+  const el = document.createElement('div');
+  el.className = 'tone'; el.dataset.id = ch.id;
+  el.innerHTML = `
+    <div class="head">
+      <span class="dot" style="background:${ch.color}"></span>
+      <input type="number" step="0.001" min="15" max="1000" class="tf"> <span class="muted">Hz</span>
+      <span class="pill tp"></span>
+      <span class="muted small tfm"></span>
+      <span style="flex:1"></span>
+      <label class="switch" title="Tono attivo"><input type="checkbox" class="ten"><span></span></label>
+      <button class="ghost tcal">Calibra</button>
+      <button class="ghost tdel" title="Rimuovi">✕</button>
+    </div>
+    <div class="stats">
+      <div><div class="k">Livello al microfono</div><div class="v tl">—</div></div>
+      <div><div class="k">Riduzione</div><div class="v tr">—</div></div>
+      <div><div class="k">Tono in uscita</div><div class="v to">—</div></div>
+      <div><div class="k">Fase</div><div class="v tph">—</div></div>
+    </div>
+    <div class="hold"></div>
+    <details><summary>Regolazione manuale</summary>
+      <div class="row"><span class="lbl">Ampiezza</span><div class="grow"><input type="range" min="-60" max="0" step="0.1" class="ta"></div></div>
+      <div class="row"><span class="lbl">Fase</span><div class="grow"><input type="range" min="0" max="360" step="0.1" class="tpp">
+        <span class="btns"><button class="tn" data-d="-10">−10°</button><button class="tn" data-d="-1">−1°</button><button class="tn" data-d="1">+1°</button><button class="tn" data-d="10">+10°</button><button class="tn" data-d="180">+180°</button></span></div></div>
+    </details>`;
+  const q = (s) => el.querySelector(s);
+  q('.tf').addEventListener('change', (e) => {
+    const f = parseFloat(String(e.target.value).replace(',', '.'));
+    if (!isFinite(f)) return;
+    ch.fint = f; setChFreq(ch, f); ch.phref = null;
+    if (ch.S && Math.abs(f - ch.calFreq) > 1) { ch.S = null; ch.state = 'new'; st.message = 'Frequenza cambiata di oltre 1 Hz: ricalibra questo tono.'; }
+    save(); render();
+  });
+  q('.ten').addEventListener('change', (e) => { ch.enabled = e.target.checked; if (!ch.enabled && ch.state !== 'new') ch.state = ch.S ? 'ready' : 'new'; else if (ch.enabled && st.autoOn && ch.S) startAdapting(ch); pushCh(ch); save(); render(); });
+  q('.tcal').addEventListener('click', async () => {
+    await ensureAudio();
+    if (!st.micOn && !(await openMic())) { render(); return; }
+    if (calSeq) return;
+    await calibrate([ch]);
+    if (ch.S && st.autoOn) startAdapting(ch);
+    render();
+  });
+  q('.tdel').addEventListener('click', () => { removeChannel(ch); render(); });
+  q('.ta').addEventListener('input', (e) => { const p = cang(ch.W); ch.W = cpolar(undb(parseFloat(e.target.value)), cmag(ch.W) > 0 ? p : 0); pushCh(ch); save(); render(); });
+  q('.tpp').addEventListener('input', (e) => { ch.W = cpolar(Math.max(cmag(ch.W), undb(-40)), parseFloat(e.target.value) * Math.PI / 180); pushCh(ch); save(); render(); });
+  el.querySelectorAll('.tn').forEach(b => b.addEventListener('click', () => {
+    const p = cang(ch.W) + parseFloat(b.dataset.d) * Math.PI / 180;
+    ch.W = cpolar(Math.max(cmag(ch.W), undb(-40)), p); pushCh(ch); save(); render();
+  }));
+  return el;
+}
+
+function renderTones() {
+  const box = $('tones');
+  const ids = new Set(st.channels.map(c => String(c.id)));
+  box.querySelectorAll('.tone').forEach(el => { if (!ids.has(el.dataset.id)) el.remove(); });
+  let empty = box.querySelector('.empty');
+  if (!st.channels.length) {
+    if (!empty) { empty = document.createElement('div'); empty.className = 'empty'; empty.textContent = 'Nessun tono. Premi “Trova e cancella”, oppure “Rileva toni” nello spettro.'; box.appendChild(empty); }
+  } else if (empty) empty.remove();
+  for (const ch of st.channels) {
+    let el = box.querySelector(`.tone[data-id="${ch.id}"]`);
+    if (!el) { el = buildTone(ch); box.appendChild(el); }
+    const q = (s) => el.querySelector(s);
+    if (document.activeElement !== q('.tf')) q('.tf').value = ch.freq.toFixed(3);
+    q('.tf').disabled = st.autoOn && ch.S != null;
+    const [txt, cls] = toneState(ch);
+    q('.tp').textContent = ch.enabled ? txt : 'disattivato';
+    q('.tp').className = 'pill tp' + (ch.enabled ? (cls ? ' ' + cls : '') : '');
+    q('.tfm').textContent = (st.micOn && ch.enabled && Math.abs(ch.fint - ch.calFreq) > 0.0005) ? 'segue ' + fmt(ch.fint, 3) + ' Hz' : '';
+    q('.ten').checked = ch.enabled;
+    q('.tcal').disabled = !!calSeq || !!st.guideText;
+    q('.tl').textContent = ch.level == null || !st.micOn ? '—' : fmt(ch.level) + ' dB';
+    const red = (ch.baseline != null && ch.level != null && st.micOn && st.outputOn && ch.enabled && cmag(ch.W) > 0) ? ch.baseline - ch.level : null;
+    q('.tr').textContent = red == null ? '—' : fmt(red) + ' dB';
+    q('.tr').style.color = red == null ? '' : red > 0 ? 'var(--good)' : 'var(--bad)';
+    const w = effW(ch);
+    q('.to').textContent = cmag(w) > 0 ? fmt(db(cmag(w))) + ' dB' : 'spento';
+    let ph = cang(ch.W) * 180 / Math.PI; if (ph < 0) ph += 360;
+    q('.tph').textContent = cmag(ch.W) > 0 ? fmt(ph, 0) + '°' : '—';
+    const manual = !st.autoOn;
+    q('.ta').disabled = !manual; q('.tpp').disabled = !manual;
+    el.querySelectorAll('.tn').forEach(b => b.disabled = !manual);
+    if (document.activeElement !== q('.ta')) q('.ta').value = Math.max(db(cmag(ch.W)), -60);
+    if (document.activeElement !== q('.tpp')) q('.tpp').value = ph;
+    let hold = '';
+    if (ch.state === 'locked' && ch.holdSec) hold = 'Senza microfono la cancellazione dovrebbe reggere circa ' + fmtDur(ch.holdSec) + ' (dalla deriva misurata della sorgente).';
+    if (ch.S && ch.state !== 'locked') hold = 'Percorso: ' + fmt(db(cmag(ch.S))) + ' dB, ' + fmt(((cang(ch.S) * 180 / Math.PI) + 360) % 360, 0) + '°';
+    q('.hold').textContent = hold;
+  }
+}
+
+function fillSelect(sel, list, cur, defLabel, kindName) {
+  const html = [`<option value="">${defLabel}</option>`].concat(list.map((d, i) =>
+    `<option value="${d.deviceId}">${(d.label || kindName + ' ' + (i + 1)).replace(/</g, '&lt;')}</option>`));
+  if (cur && !list.some(d => d.deviceId === cur)) html.push(`<option value="${cur}">${(kindName === 'Microfono' ? st.micLabel : st.outLabel) || 'scelto'} (scollegato)</option>`);
+  const s = html.join('');
+  if (sel.dataset.h !== s) { sel.innerHTML = s; sel.dataset.h = s; }
+  if (document.activeElement !== sel) sel.value = cur || '';
+}
+
+function render() {
+  const busy = !!st.guideText || !!calSeq;
+  $('guideBtn').disabled = busy;
+  $('guideBtn').textContent = st.guideText ? 'In corso…' : 'Trova e cancella';
+  const locked = st.channels.filter(c => c.enabled && c.state === 'locked').length;
+  const act = st.channels.filter(c => c.enabled && c.S).length;
+  let status = '';
+  if (st.guideText) status = '<b>' + st.guideText + '</b>';
+  else if (calSeq) status = '<b>Calibrazione in corso…</b> resta in silenzio.';
+  else if (st.autoOn) status = locked === act && act ? '<b>Stabile</b> su ' + act + (act > 1 ? ' toni' : ' tono') + '.' : '<b>In regolazione</b>: ' + locked + ' di ' + act + ' stabili.';
+  else status = 'Metti il microfono dove appoggi la testa e premi il pulsante.';
+  $('status').innerHTML = status;
+
+  $('sAuto').textContent = st.autoOn ? (locked === act && act ? 'stabile' : 'in regolazione') : (st.outputOn ? 'manuale' : 'spenta');
+  $('sMic').textContent = st.micOn ? 'acceso' : st.micPaused ? 'in pausa' : st.micWaiting ? 'in attesa' : 'spento';
+  $('sTones').textContent = String(st.channels.filter(c => c.enabled).length);
+  $('sNext').textContent = st.nextCheck ? 'tra ' + fmtDur(Math.max(0, st.nextCheck - nowS())) : '—';
+
+  $('msg').textContent = st.message || 'Premi “Trova e cancella”: ascolta, trova i ronzi e li cancella.';
+  renderTones();
+  $('calAllBtn').disabled = busy || !st.channels.some(c => c.enabled);
+  $('addToneBtn').disabled = busy || st.channels.length >= MAX_CH;
+  $('autoSw').checked = st.autoOn;
+  $('autoSw').disabled = busy;
+  $('outSw').checked = st.outputOn;
+  $('outSw').disabled = busy;
+  $('scanBtn').disabled = busy;
+
+  const chips = $('peaks');
+  if (st.peaks.length) {
+    const h = st.peaks.map((p, i) => {
+      const used = st.channels.some(ch => Math.abs(ch.freq - p.f) < MIN_SPACING);
+      return `<button class="chip${used ? ' used' : ''}" data-i="${i}" ${used ? 'disabled' : ''}><b>${fmt(p.f, 2)} Hz</b> · +${fmt(p.prom, 0)} dB ${used ? '✓' : '＋'}</button>`;
+    }).join('');
+    if (chips.dataset.h !== h) {
+      chips.innerHTML = h; chips.dataset.h = h;
+      chips.querySelectorAll('button').forEach(b => b.addEventListener('click', () => { addChannel(st.peaks[+b.dataset.i].f); render(); }));
+    }
+  }
+
+  fillSelect($('micSel'), st.inputs, st.micId, SIM ? 'Microfono simulato' : 'Predefinito di sistema', 'Microfono');
+  $('micSw').checked = st.micOn;
+  $('outRow').hidden = !st.canSink;
+  $('outNote').hidden = st.canSink || !st.ready || SIM;
+  if (st.canSink) fillSelect($('outSel'), st.outputs, st.outId, 'Predefinito di sistema', 'Altoparlante');
+
+  $('holdSel').value = st.holdMode;
+  $('recheckSel').value = st.recheck;
+  $('recheckSel').disabled = st.holdMode !== 'periodic';
+  $('reactIn').value = st.react; $('reactVal').textContent = st.react < 25 ? 'calma' : st.react < 60 ? 'media' : 'rapida';
+  $('maxIn').value = db(st.maxAmp); $('maxVal').textContent = fmt(db(st.maxAmp)) + ' dBFS';
+  $('testIn').value = st.testDb; $('testVal').textContent = fmt(st.testDb, 0) + ' dBFS';
+  $('promIn').value = st.minProm; $('promVal').textContent = '+' + st.minProm + ' dB';
+}
+
+function drawSpectrum() {
+  const cv = $('spec');
   const dpr = window.devicePixelRatio || 1;
   const w = cv.clientWidth, h = cv.clientHeight;
+  if (!w) return;
   if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(h * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); }
   const g = cv.getContext('2d');
   g.setTransform(dpr, 0, 0, dpr, 0, 0);
   g.clearRect(0, 0, w, h);
-  const v = st.history;
   const css = getComputedStyle(document.documentElement);
-  if (v.length < 2) {
-    g.fillStyle = css.getPropertyValue('--muted');
-    g.font = '12px -apple-system, system-ui, sans-serif';
-    g.fillText('Andamento del livello (ultimi 30 s)', 10, h / 2 + 4);
+  const muted = css.getPropertyValue('--muted'), line = css.getPropertyValue('--line'), accent = css.getPropertyValue('--accent');
+  const fMin = 20, fMax = 500;
+  const X = (f) => (Math.log(f / fMin) / Math.log(fMax / fMin)) * w;
+  g.font = '10px ui-monospace, Menlo, monospace';
+  g.strokeStyle = line; g.fillStyle = muted; g.lineWidth = 1;
+  for (const f of [20, 30, 50, 64, 100, 150, 200, 300, 500]) {
+    const x = X(f); g.beginPath(); g.moveTo(x, 0); g.lineTo(x, h - 12); g.stroke();
+    g.fillText(String(f), Math.min(x + 2, w - 20), h - 2);
+  }
+  if (!st.spec || !st.micOn) {
+    g.fillStyle = muted; g.font = '12px -apple-system, system-ui, sans-serif';
+    g.fillText(st.micPaused ? 'Microfono in pausa (tutto stabile)' : 'Accendi il microfono per vedere lo spettro', 10, h / 2);
     return;
   }
-  let lo = Math.min(...v), hi = Math.max(...v);
-  if (st.baseline != null) { lo = Math.min(lo, st.baseline); hi = Math.max(hi, st.baseline); }
-  lo -= 3; hi += 3;
-  const y = (x) => h * (1 - (x - lo) / (hi - lo));
-  const step = w / (HISTORY_LEN - 1);
-  const x0 = w - (v.length - 1) * step;
-  if (st.baseline != null) {
-    g.strokeStyle = css.getPropertyValue('--muted'); g.setLineDash([4, 3]); g.lineWidth = 1;
-    g.beginPath(); g.moveTo(0, y(st.baseline)); g.lineTo(w, y(st.baseline)); g.stroke(); g.setLineDash([]);
+  const hz = st.specHz, k0 = Math.ceil(fMin / hz), k1 = Math.min(st.spec.length - 1, Math.floor(fMax / hz));
+  let hi = -200, lo = 0;
+  for (let k = k0; k <= k1; k++) { hi = Math.max(hi, st.spec[k]); lo = Math.min(lo, st.spec[k]); }
+  hi += 3; lo = Math.max(lo, hi - 80);
+  const Y = (v) => (h - 14) * (1 - (v - lo) / (hi - lo));
+  for (const ch of st.channels) {
+    if (!ch.enabled) continue;
+    const x = X(ch.freq);
+    g.strokeStyle = ch.color; g.globalAlpha = 0.5; g.lineWidth = 2;
+    g.beginPath(); g.moveTo(x, 0); g.lineTo(x, h - 12); g.stroke(); g.globalAlpha = 1;
   }
-  g.strokeStyle = css.getPropertyValue('--accent'); g.lineWidth = 1.6;
-  g.beginPath();
-  v.forEach((val, i) => { const px = x0 + i * step; if (i === 0) g.moveTo(px, y(val)); else g.lineTo(px, y(val)); });
+  g.strokeStyle = accent; g.lineWidth = 1.3; g.beginPath();
+  for (let k = k0; k <= k1; k++) { const x = X(k * hz), y = Y(st.spec[k]); if (k === k0) g.moveTo(x, y); else g.lineTo(x, y); }
   g.stroke();
-  g.fillStyle = css.getPropertyValue('--muted'); g.font = '11px ui-monospace, Menlo, monospace';
-  g.fillText(fmt(hi - 3, 0) + ' dB', 6, 12);
-  g.fillText(fmt(lo + 3, 0) + ' dB', 6, h - 5);
-}
-
-function makeButtons(containerId, items) {
-  const c = $(containerId);
-  for (const [label, fn] of items) {
-    const b = document.createElement('button');
-    b.textContent = label;
-    b.addEventListener('click', async () => { await ensureAudio(); fn(); render(); });
-    c.appendChild(b);
+  g.fillStyle = css.getPropertyValue('--warn');
+  for (const p of st.peaks) {
+    const x = X(p.f), y = Y(p.level);
+    g.beginPath(); g.arc(x, Math.max(y, 6), 3.5, 0, 2 * Math.PI); g.fill();
+    g.fillText(fmt(p.f, 1), Math.min(x + 5, w - 36), Math.max(y, 12));
   }
-}
-
-function nudgePhase(d) {
-  let p = (st.phaseDeg + d) % 360; if (p < 0) p += 360;
-  st.phaseDeg = p; pushParams(); saveSettings();
+  g.fillStyle = muted;
+  g.fillText(fmt(hi, 0) + ' dB', 4, 10);
 }
 
 function wireUI() {
-  const nudgeF = (d) => setFreq(Math.round((st.freq + d) * 1000) / 1000);
-  makeButtons('freqBtns', [['−1', () => nudgeF(-1)], ['−0,1', () => nudgeF(-0.1)], ['−0,01', () => nudgeF(-0.01)], ['−0,001', () => nudgeF(-0.001)],
-    ['+0,001', () => nudgeF(0.001)], ['+0,01', () => nudgeF(0.01)], ['+0,1', () => nudgeF(0.1)], ['+1', () => nudgeF(1)]]);
-  makeButtons('phBtns', [['−10°', () => nudgePhase(-10)], ['−1°', () => nudgePhase(-1)], ['+1°', () => nudgePhase(1)], ['+10°', () => nudgePhase(10)], ['Inverti (+180°)', () => nudgePhase(180)]]);
-
   $('startBtn').addEventListener('click', async () => {
     try {
       await ensureAudio();
       $('startOverlay').hidden = true;
-      st.message = 'Audio avviato. Accendi il microfono e mettilo dove appoggi la testa sul cuscino.';
-    } catch (e) {
-      st.message = 'Impossibile avviare l\'audio: ' + e.message;
+      if (!st.message) st.message = 'Audio pronto. Metti il microfono dove appoggi la testa e premi “Trova e cancella”.';
+    } catch (e) { st.message = 'Impossibile avviare l\'audio: ' + e.message; }
+    render();
+  });
+  $('guideBtn').addEventListener('click', () => guided());
+  $('scanBtn').addEventListener('click', () => scanAndShow());
+  $('addToneBtn').addEventListener('click', async () => { await ensureAudio(); const ch = addChannel(st.channels.length ? Math.min(st.channels[st.channels.length - 1].freq + 20, 480) : 100); if (ch) st.message = 'Tono aggiunto: imposta la frequenza e premi Calibra.'; render(); });
+  $('calAllBtn').addEventListener('click', async () => {
+    await ensureAudio();
+    if (!st.micOn && !(await openMic())) { render(); return; }
+    const wasAuto = st.autoOn;
+    await calibrate(st.channels.filter(c => c.enabled));
+    if (wasAuto) st.channels.filter(c => c.enabled && c.S).forEach(startAdapting);
+    render();
+  });
+  $('autoSw').addEventListener('change', async (e) => {
+    await ensureAudio();
+    if (e.target.checked && !st.micOn && !st.micPaused) await openMic();
+    setAuto(e.target.checked); render();
+  });
+  $('outSw').addEventListener('change', async (e) => { await ensureAudio(); setOutput(e.target.checked); render(); });
+  $('micSw').addEventListener('change', async (e) => {
+    if (e.target.checked) {
+      clearRecheck(); st.micPaused = false;
+      const before = st.message;
+      if (await openMic() && st.message === before) st.message = 'Microfono attivo: ' + st.micActive + '.';
+    } else {
+      closeMic(); st.micWaiting = false; clearRecheck(); st.micPaused = false;
+      if (st.autoOn) { setAuto(false); st.message = 'Microfono spento: i toni restano fissi come sono (modalità manuale).'; }
     }
     render();
   });
-  $('outSw').addEventListener('change', async (e) => { await ensureAudio(); setOutput(e.target.checked); render(); });
-  $('freqIn').addEventListener('change', (e) => { setFreq(parseFloat(String(e.target.value).replace(',', '.'))); render(); });
-  $('ampIn').addEventListener('input', (e) => { st.amp = undb(parseFloat(e.target.value)); pushParams(); saveSettings(); render(); });
-  $('phIn').addEventListener('input', (e) => { st.phaseDeg = parseFloat(e.target.value); pushParams(); saveSettings(); render(); });
-  $('micSw').addEventListener('change', async (e) => { await setMic(e.target.checked); render(); });
-  $('baseBtn').addEventListener('click', () => { saveBaseline(); render(); });
-  $('useEstBtn').addEventListener('click', () => { if (st.estFreq != null) setFreq(Math.round(st.estFreq * 1000) / 1000); render(); });
-  $('calBtn').addEventListener('click', () => { startCalibration(); render(); });
-  $('autoSw').addEventListener('change', (e) => { setAuto(e.target.checked); render(); });
-  $('trackSw').addEventListener('change', (e) => { st.track = e.target.checked; saveSettings(); render(); });
-  $('muIn').addEventListener('input', (e) => { st.mu = parseFloat(e.target.value); saveSettings(); render(); });
-  $('maxIn').addEventListener('input', (e) => { st.maxAmp = undb(parseFloat(e.target.value)); saveSettings(); render(); });
-  window.addEventListener('resize', scheduleRender);
+  $('micSel').addEventListener('change', async (e) => {
+    const id = e.target.value;
+    const dev = st.inputs.find(d => d.deviceId === id);
+    st.micId = id; st.micLabel = dev ? dev.label : '';
+    st.channels.forEach(ch => { if (ch.S) { ch.S = null; ch.state = 'new'; } });
+    if (st.autoOn) setAuto(false);
+    save();
+    if (st.micOn || st.micPaused) { closeMic(); clearRecheck(); st.micPaused = false; await openMic(); }
+    st.message = 'Microfono impostato: ' + (st.micLabel || 'predefinito di sistema') + '. Lo userò sempre, anche se ne colleghi altri. Ricalibra i toni.';
+    render();
+  });
+  $('outSel').addEventListener('change', async (e) => {
+    const id = e.target.value;
+    const dev = st.outputs.find(d => d.deviceId === id);
+    st.outId = id; st.outLabel = dev ? dev.label : '';
+    try { if (ctx) await ctx.setSinkId(id); } catch (err) { st.message = 'Non riesco a usare questo altoparlante: ' + err.message; }
+    st.channels.forEach(ch => { if (ch.S) { ch.S = null; ch.state = 'new'; } });
+    if (st.autoOn) setAuto(false);
+    save();
+    st.message = 'Altoparlante impostato: ' + (st.outLabel || 'predefinito di sistema') + '. Ricalibra i toni.';
+    render();
+  });
+  $('holdSel').addEventListener('change', (e) => { st.holdMode = e.target.value; if (st.holdMode === 'always' && st.micPaused) { clearRecheck(); st.micPaused = false; openMic(); } save(); render(); });
+  $('recheckSel').addEventListener('change', (e) => { st.recheck = e.target.value; save(); render(); });
+  $('reactIn').addEventListener('input', (e) => { st.react = +e.target.value; save(); render(); });
+  $('maxIn').addEventListener('input', (e) => { st.maxAmp = undb(+e.target.value); save(); render(); });
+  $('testIn').addEventListener('input', (e) => { st.testDb = +e.target.value; save(); render(); });
+  $('promIn').addEventListener('input', (e) => { st.minProm = +e.target.value; save(); render(); });
+  window.addEventListener('resize', () => { drawSpectrum(); });
+  setInterval(() => { if (st.nextCheck) scheduleRender(); }, 1000);
 }
 
-loadSettings();
+load();
 wireUI();
 if (SIM) $('simTag').hidden = false;
 render();
 
 // accesso per i test automatici
-window.__controfase = { st, setMic, setFreq, setOutput, setAuto, startCalibration, saveBaseline, ensureAudio };
+window.__controfase = { st, sr: () => ctx && ctx.sampleRate, guided, setAuto, setOutput, openMic, closeMic, calibrate, addChannel, scan,
+  simPump: (i, on) => node && node.port.postMessage({ type: 'simPump', index: i, on }) };
 </script>
 </body>
 </html>
