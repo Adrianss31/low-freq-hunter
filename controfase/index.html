@@ -383,6 +383,7 @@ const fmtDur = (s) => s < 90 ? Math.round(s) + ' s' : s < 5400 ? Math.round(s / 
 
 // ================= costanti =================
 const SIM = new URLSearchParams(location.search).has('sim');
+const STORE_KEY = SIM ? 'controfase2-sim' : 'controfase2';   // la simulazione non tocca le impostazioni vere
 const T_BLOCK = 0.25;
 const MAX_CH = 6;
 const MIN_SPACING = 6;           // Hz fra due toni
@@ -412,7 +413,7 @@ const reactFactor = () => 2.5 - 2 * st.react / 100;   // 2,5 … 0,5
 const calKey = () => (SIM ? 'sim' : st.micId + '|' + st.outId);
 function save() {
   try {
-    localStorage.setItem('controfase2', JSON.stringify({
+    localStorage.setItem(STORE_KEY, JSON.stringify({
       micId: st.micId, micLabel: st.micLabel, outId: st.outId, outLabel: st.outLabel,
       react: st.react, maxAmp: st.maxAmp, testDb: st.testDb, minProm: st.minProm, holdMode: st.holdMode, recheck: st.recheck,
       calKey: calKey(),
@@ -422,7 +423,7 @@ function save() {
 }
 function load() {
   try {
-    const s = JSON.parse(localStorage.getItem('controfase2') || 'null');
+    const s = JSON.parse(localStorage.getItem(STORE_KEY) || 'null');
     if (!s) return;
     for (const k of ['micId', 'micLabel', 'outId', 'outLabel', 'react', 'maxAmp', 'testDb', 'minProm', 'holdMode', 'recheck']) if (k in s) st[k] = s[k];
     const sameSetup = s.calKey === calKey();
