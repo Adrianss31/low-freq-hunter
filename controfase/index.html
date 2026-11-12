@@ -91,6 +91,7 @@
   .tone details { margin-top: 6px; }
   .tone details summary { font-size: 12px; color: var(--muted); cursor: pointer; }
   .tone .hold { font-size: 12px; color: var(--muted); margin-top: 6px; }
+  .tone .hold .hwarn { color: var(--warn); margin-top: 3px; }
   .empty { color: var(--muted); padding: 10px 0; font-size: 13px; }
   details.help { color: var(--muted); font-size: 13px; }
   details.help summary { cursor: pointer; color: var(--ink); padding: 8px 0; }
@@ -249,19 +250,22 @@ class ControfaseProcessor extends AudioWorkletProcessor {
     for (let i = 0; i < this.T; i++) { this.win[i] = 0.5 - 0.5 * Math.cos(2 * Math.PI * i / this.T); s += this.win[i]; }
     this.winSum = s;
     this.idx = 0; this.accSq = 0;
+    this.half = this.T >> 1;   // centro della finestra di Hann
+    this.n = 0; this.tMid = 0;  // campioni dall'avvio, istante (s) del centro del blocco
     this.smooth = 1 - Math.exp(-1 / (0.05 * sampleRate));
     this.chans = new Map(); this.list = [];
     this.sim = null;
     this.port.onmessage = (e) => this.onMsg(e.data);
   }
-  osc(f) { const w = 2 * Math.PI * f / this.fs; return { c: 1, s: 0, cd: Math.cos(w), sd: Math.sin(w) }; }
-  retune(o, f) { const w = 2 * Math.PI * f / this.fs; o.cd = Math.cos(w); o.sd = Math.sin(w); }
+  osc(f) { const w = 2 * Math.PI * f / this.fs; return { c: 1, s: 0, cd: Math.cos(w), sd: Math.sin(w), w }; }
+  retune(o, f) { const w = 2 * Math.PI * f / this.fs; o.cd = Math.cos(w); o.sd = Math.sin(w); o.w = w; }
   onMsg(d) {
     if (d.type === 'set') {
       let c = this.chans.get(d.id);
       if (!c) {
         c = { id: d.id, freq: d.freq, bf: d.freq, o: this.osc(d.freq), op: this.osc(d.freq + PROBE), om: this.osc(d.freq - PROBE),
-              wr: 0, wi: 0, tr: 0, ti: 0, aR: 0, aI: 0, pR: 0, pI: 0, mR: 0, mI: 0 };
+              wr: 0, wi: 0, tr: 0, ti: 0, aR: 0, aI: 0, pR: 0, pI: 0, mR: 0, mI: 0, qR: 0, qI: 0,
+              ph: 0, cyc: 0, phMid: 0 };   // fase dell'oscillatore: giri interi + resto in [0, 2π)
         this.chans.set(d.id, c); this.list = Array.from(this.chans.values());
       }
       if (c.freq !== d.freq) { c.freq = d.freq; this.retune(c.o, d.freq); this.retune(c.op, d.freq + PROBE); this.retune(c.om, d.freq - PROBE); }
@@ -304,6 +308,7 @@ class ControfaseProcessor extends AudioWorkletProcessor {
     let x = s.g * yd;
     for (const d of s.dists) { d.ph += 2 * Math.PI * d.f / this.fs; if (d.ph > 6.283185307179586) d.ph -= 6.283185307179586; x += d.gate * d.a * Math.cos(d.ph); }
     x += s.noise * this.gauss();
+    s.truth = x;   // segnale reale al microfono, anche a microfono spento (solo per le verifiche)
     return s.mic ? x : 0;
   }
   process(inputs, outputs) {
@@ -325,16 +330,23 @@ class ControfaseProcessor extends AudioWorkletProcessor {
       const x = this.sim ? this.simSample(y) : (inp ? inp[i] : 0);
       if (o1) o1[i] = x;
       const wx = x * this.win[this.idx];
+      const wq = this.sim ? this.sim.truth * this.win[this.idx] : 0;
+      const mid = this.idx === this.half;
+      if (mid) this.tMid = this.n / this.fs;
       this.accSq += x * x;
       for (let k = 0; k < L.length; k++) {
         const c = L[k], o = c.o, p = c.op, m = c.om;
         c.aR += wx * o.c; c.aI -= wx * o.s;
         c.pR += wx * p.c; c.pI -= wx * p.s;
         c.mR += wx * m.c; c.mI -= wx * m.s;
+        c.qR += wq * o.c; c.qI -= wq * o.s;
+        if (mid) c.phMid = c.cyc * 6.283185307179586 + c.ph;
+        c.ph += o.w; if (c.ph >= 6.283185307179586) { c.ph -= 6.283185307179586; c.cyc++; }
         let t = o.c * o.cd - o.s * o.sd; o.s = o.s * o.cd + o.c * o.sd; o.c = t;
         t = p.c * p.cd - p.s * p.sd; p.s = p.s * p.cd + p.c * p.sd; p.c = t;
         t = m.c * m.cd - m.s * m.sd; m.s = m.s * m.cd + m.c * m.sd; m.c = t;
       }
+      this.n++;
       if (++this.idx >= this.T) this.flush();
     }
     for (let ch = 1; ch < outputs[0].length; ch++) outputs[0][ch].set(o0);
@@ -344,7 +356,9 @@ class ControfaseProcessor extends AudioWorkletProcessor {
     const k = 2 / this.winSum;
     const ch = this.list.map(c => {
       const r = { id: c.id, freq: c.bf, re: c.aR * k, im: c.aI * k, pr: c.pR * k, pi: c.pI * k, mr: c.mR * k, mi: c.mI * k };
-      c.aR = c.aI = c.pR = c.pI = c.mR = c.mI = 0;
+      r.ph = c.phMid; r.t = this.tMid;
+      if (this.sim) { r.qr = c.qR * k; r.qi = c.qI * k; }
+      c.aR = c.aI = c.pR = c.pI = c.mR = c.mI = c.qR = c.qI = 0;
       c.bf = c.freq;
       for (const o of [c.o, c.op, c.om]) { const g = 1 / Math.hypot(o.c, o.s); o.c *= g; o.s *= g; }
       return r;
@@ -378,11 +392,14 @@ const undb = (d) => Math.pow(10, d / 20);
 const fmt = (v, d = 1) => v == null || !isFinite(v) ? '—' : v.toLocaleString('it-IT', { minimumFractionDigits: d, maximumFractionDigits: d });
 const mean = (a) => a.length ? a.reduce((x, y) => x + y, 0) / a.length : 0;
 const clamp = (x, a, b) => Math.min(Math.max(x, a), b);
+const wrapPi = (x) => x - 2 * Math.PI * Math.round(x / (2 * Math.PI));
 const nowS = () => performance.now() / 1000;
 const fmtDur = (s) => s < 90 ? Math.round(s) + ' s' : s < 5400 ? Math.round(s / 60) + ' min' : fmt(s / 3600, 1) + ' h';
 
 // ================= costanti =================
 const SIM = new URLSearchParams(location.search).has('sim');
+// ?sim=1&deriva=0.0003 → sorgenti più stabili (Hz/√s di passeggiata casuale della frequenza)
+const SIM_WANDER = parseFloat(new URLSearchParams(location.search).get('deriva')) || 0.004;
 const STORE_KEY = SIM ? 'controfase2-sim' : 'controfase2';   // la simulazione non tocca le impostazioni vere
 const T_BLOCK = 0.25;
 const MAX_CH = 6;
@@ -390,6 +407,13 @@ const MIN_SPACING = 6;           // Hz fra due toni
 const K_CAP = 0.3;               // guadagno massimo del controllo
 const K_MIN = 0.02;              // guadagno minimo: sotto questo il tono è considerato fermo
 const DEPTH = 1e-3;              // 30 dB sotto il ronzio originale: oltre, le oscillazioni non contano
+const PROBE_HZ = 8;              // come PROBE nel worklet
+const HOLD_PHI = 15 * Math.PI / 180;  // scivolamento di fase accettato a microfono spento (≈ 11 dB di cancellazione residua)
+const HOLD_WINS = [2, 4, 8, 15, 30, 60];  // s di storia di fase su cui stimare la retta: si sceglie quella che prevede meglio
+const HOLD_MIN = 30;             // s: se la tenuta prevista è più corta, spegnere il microfono non conviene
+const HOLD_TAUS = [2, 4, 6, 8, 10, 15, 20, 30, 45, 60, 90, 120, 180, 300, 600];
+const TRACK_KEEP = 1200;         // s di storia di fase tenuti per tono (pause del microfono comprese)
+const HOLD_HISTORY = 60;         // s di storia misurata necessari prima di fidarsi della tenuta
 const COLORS = ['#2f6fed', '#e0812b', '#1f9d57', '#b34fd1', '#d4442e', '#0f9bb0'];
 
 // ================= stato =================
@@ -447,7 +471,7 @@ function newChannel(freq) {
     sigma2: null, level: null, lastM: null, lastB: null, history: [],
     Kprev: 0, Mprev: null, prevDh: null, adaptStart: 0, Weff: ZERO, WeffPrev: ZERO, phref: null, pllGrace: 0,
     Scal: null, Rs: null, best: null, stable: 0, resid: [], lockRef: null, lockedAt: null, divergeN: 0,
-    fintHist: [], holdSec: null, K: 0
+    track: [], holdSec: null, holdRaw: null, holdWin: 4, holdScale: 1, frozen: null, lastSlip: null, limitN: 0, snrDb: null, K: 0
   };
 }
 function addChannel(freq) {
@@ -487,7 +511,8 @@ function setChFreq(ch, f) {
 // ================= audio =================
 async function ensureAudio() {
   if (ctx) { if (ctx.state !== 'running') await ctx.resume(); return; }
-  ctx = new AudioContext({ latencyHint: 'interactive' });
+  // in simulazione l'audio non va su nessun altoparlante: tutto resta dentro la pagina
+  ctx = SIM ? new AudioContext({ latencyHint: 'interactive', sinkId: { type: 'none' } }) : new AudioContext({ latencyHint: 'interactive' });
   const src = document.getElementById('workletSrc').textContent;
   const url = URL.createObjectURL(new Blob([src], { type: 'application/javascript' }));
   await ctx.audioWorklet.addModule(url);
@@ -496,20 +521,21 @@ async function ensureAudio() {
     channelCount: 1, channelCountMode: 'explicit', channelInterpretation: 'speakers'
   });
   node.port.onmessage = (e) => onBlocks(e.data);
-  node.connect(ctx.destination, 0);
+  if (SIM) { const mute = ctx.createGain(); mute.gain.value = 0; node.connect(mute, 0); mute.connect(ctx.destination); }
+  else node.connect(ctx.destination, 0);
   analyser = ctx.createAnalyser();
   analyser.fftSize = 32768;
   analyser.smoothingTimeConstant = 0;
   node.connect(analyser, 1);
   st.specHz = ctx.sampleRate / analyser.fftSize;
-  st.canSink = typeof ctx.setSinkId === 'function';
+  st.canSink = !SIM && typeof ctx.setSinkId === 'function';
   if (st.canSink && st.outId) {
     try { await ctx.setSinkId(st.outId); } catch (e) { st.message = 'L\'altoparlante scelto (' + (st.outLabel || '?') + ') non è disponibile: uso quello di sistema.'; }
   }
   if (ctx.state !== 'running') await ctx.resume();
   if (SIM) {
     node.port.postMessage({ type: 'sim', gain: 0.6, delay: 0.031, noise: undb(-62),
-      dists: [{ f: 100.037, amp: undb(-34), phase: 1.1, wander: 0.004 }, { f: 64.21, amp: undb(-40), phase: 0.3, wander: 0.004 }] });
+      dists: [{ f: 100.037, amp: undb(-34), phase: 1.1, wander: SIM_WANDER }, { f: 64.21, amp: undb(-40), phase: 0.3, wander: SIM_WANDER }] });
   }
   pushAll();
   if (navigator.mediaDevices && navigator.mediaDevices.addEventListener) {
@@ -600,6 +626,7 @@ function closeMic() {
 }
 
 function onMicEnded() {
+  if (st.autoOn && st.outputOn) freezeTones();
   closeMic();
   st.micWaiting = true;
   st.message = 'Il microfono (' + st.micActive + ') si è scollegato. I toni restano come sono; riattivo il microfono appena torna.';
@@ -627,7 +654,13 @@ function tickWaiters() {
   blockWaiters = keep;
 }
 
+const simLog = [];   // simulazione: livello reale di ogni tono al microfono, anche a microfono spento
 function onBlocks(d) {
+  if (SIM) {
+    const t = nowS();
+    for (const b of d.ch) if (b.qr != null) simLog.push({ t, id: b.id, db: db(Math.hypot(b.qr, b.qi)), mic: st.micOn });
+    if (simLog.length > 20000) simLog.splice(0, simLog.length - 20000);
+  }
   if (!st.micOn) return;
   st.totalDb = db(d.rms * Math.SQRT2);
   if (st.settle > 0) { st.settle--; return; }
@@ -636,7 +669,12 @@ function onBlocks(d) {
     const ch = chById(b.id);
     if (!ch) continue;
     const M = cx(b.re, b.im);
-    const n2 = (b.pr * b.pr + b.pi * b.pi + b.mr * b.mr + b.mi * b.mi) / 2;
+    // rumore dalle sonde a ±8 Hz, scartando quelle che cadono su un altro tono
+    const others = st.channels.filter(c => c !== ch && c.enabled).map(c => c.freq);
+    const clear = (f) => others.every(o => Math.abs(o - f) > 4);
+    const pp = b.pr * b.pr + b.pi * b.pi, mm = b.mr * b.mr + b.mi * b.mi;
+    const pOk = clear(ch.freq + PROBE_HZ), mOk = clear(ch.freq - PROBE_HZ);
+    const n2 = pOk && mOk ? (pp + mm) / 2 : pOk ? pp : mOk ? mm : Math.min(pp, mm);
     ch.sigma2 = ch.sigma2 == null ? n2 : ch.sigma2 + 0.08 * (n2 - ch.sigma2);
     const lvl = db(cmag(M));
     ch.level = ch.level == null ? lvl : ch.level + 0.3 * (lvl - ch.level);
@@ -669,6 +707,8 @@ function step(ch, t) {
   // (solo se il ronzio c'è davvero: se la sorgente si ferma, la frequenza resta dov'è)
   const basePow0 = ch.baseline != null ? Math.pow(10, ch.baseline / 10) : 0;
   if (Dh && cmag2(Dh) > Math.max(4 * s2, 0.01 * basePow0) && ch.enabled) {
+    if (ch.frozen) measureSlip(ch, Dh);
+    trackPhase(ch, Dh);
     // in acquisizione (tono non ancora calibrato) aggancio prima la frequenza dalla rotazione del fasore
     if (!known && ch.prevDh && cmag2(ch.prevDh) > 4 * s2) {
       const dphi = cang(cmul(Dh, cconj(ch.prevDh)));
@@ -688,8 +728,6 @@ function step(ch, t) {
   }
   ch.prevDh = Dh;
   if (ch.pllGrace > 0) ch.pllGrace--;
-  ch.fintHist.push({ t, f: ch.fint });
-  while (ch.fintHist.length && ch.fintHist[0].t < t - 180) ch.fintHist.shift();
 
   if (!st.autoOn || !known || !ch.enabled) { ch.Mprev = null; return; }
   if (ch.state !== 'adapting' && ch.state !== 'locked') return;
@@ -732,7 +770,7 @@ function step(ch, t) {
   else ch.K = Math.max(K_MIN, ch.K * 0.95);
   const K = ch.K;
   let W = csub(ch.W, cscale(cdiv(M, ch.S), K));
-  if (cmag(W) > st.maxAmp) W = cscale(W, st.maxAmp / cmag(W));
+  if (cmag(W) > st.maxAmp) { W = cscale(W, st.maxAmp / cmag(W)); ch.limitN++; } else ch.limitN = 0;
   ch.W = W; ch.Mprev = M; ch.Kprev = K;
   pushCh(ch);
 
@@ -740,7 +778,7 @@ function step(ch, t) {
   ch.stable = (K <= K_MIN * 1.01 && ch.Rs <= 2.5 * floor) ? (ch.stable || 0) + 1 : 0;
   if (ch.stable >= Math.round(24 * reactFactor())) {
     ch.state = 'locked'; ch.lockRef = Math.max(ch.Rs, ch.best); ch.lockedAt = t; ch.Kprev = 0; ch.nLock = (ch.nLock || 0) + 1;
-    updateHoldEstimate(ch);
+    const h = holdEstimate(ch); if (h != null) ch.holdRaw = h; if (ch.holdRaw) ch.holdSec = ch.holdRaw * ch.holdScale;
   }
 
   // --- protezione: se il livello sale invece di scendere ---
@@ -751,22 +789,121 @@ function step(ch, t) {
   }
 }
 
-function updateHoldEstimate(ch) {
-  // modello: la frequenza della sorgente fa una "passeggiata casuale"; ne stimo l'intensità dagli
-  // scarti a 5 s della frequenza agganciata, poi calcolo dopo quanto la fase scivola in media di ~30°
-  const t0 = Math.max(nowS() - 180, (ch.adaptStart || 0) + 15);
-  const h = ch.fintHist.filter(x => x.t > t0);
-  if (h.length < 60) { ch.holdSec = null; return; }
-  let sum = 0, n = 0, j = 0;
-  for (let i = 0; i < h.length; i++) {
-    while (j < h.length && h[j].t < h[i].t + 5) j++;
-    if (j >= h.length) break;
-    const d = h[j].f - h[i].f; sum += d * d; n++;
+// ================= storia di fase e tenuta a microfono spento =================
+// Fase assoluta della sorgente = fase del nostro oscillatore (contata nel worklet) + fase del disturbo stimato.
+// Su questa storia si stima la frequenza esatta (retta di regressione) e quanto a lungo la si può prevedere.
+function trackPhase(ch, Dh) {
+  const b = ch.lastB;
+  if (b.ph == null) return;
+  const u0 = cang(Dh), tr = ch.track, last = tr[tr.length - 1];
+  if (last && b.t > last.t) {
+    // anche dopo una pausa del microfono: l'oscillatore ha continuato a contare la sua fase,
+    // quindi la serie prosegue (vale finché la fase non è scivolata di oltre mezzo giro)
+    const u = last.u + wrapPi(u0 - last.u);
+    tr.push({ t: b.t, ph: b.ph, u, th: b.ph + u });
+  } else {
+    tr.length = 0;
+    tr.push({ t: b.t, ph: b.ph, u: u0, th: b.ph + u0 });
   }
-  if (n < 10) { ch.holdSec = null; return; }
-  const sw2 = Math.max(sum / n / 5, 1e-9);           // Hz²/s
-  const phiMax = 30 * Math.PI / 180;
-  ch.holdSec = clamp(Math.cbrt(3 * phiMax * phiMax / (4 * Math.PI * Math.PI * sw2)), 5, 7200);
+  while (tr.length && tr[0].t < b.t - TRACK_KEEP) tr.shift();
+}
+
+function fitLine(pts) {
+  const n = pts.length;
+  if (n < 2) return null;
+  const t0 = pts[0].t, h0 = pts[0].th;
+  let st_ = 0, sh = 0;
+  for (const p of pts) { st_ += p.t - t0; sh += p.th - h0; }
+  const tm = st_ / n, hm = sh / n;
+  let sxx = 0, sxy = 0;
+  for (const p of pts) { const x = p.t - t0 - tm; sxx += x * x; sxy += x * (p.th - h0 - hm); }
+  if (sxx <= 0) return null;
+  const k = sxy / sxx;
+  return { f: k / (2 * Math.PI), n, at: (t) => h0 + hm + k * (t - t0 - tm) };
+}
+// punti con a < t ≤ b (la storia è ordinata nel tempo)
+function lowerT(tr, t) { let lo = 0, hi = tr.length; while (lo < hi) { const m = (lo + hi) >> 1; if (tr[m].t <= t) lo = m + 1; else hi = m; } return lo; }
+const span = (tr, a, b) => tr.slice(lowerT(tr, a), lowerT(tr, b));
+
+// Tenuta misurata sui dati: per ogni anticipo τ provo a prevedere la fase τ secondi dopo con una retta
+// sugli ultimi W secondi, e confronto con quella vera. La tenuta è il τ in cui l'errore tipico arriva a 15°.
+// W si sceglie fra HOLD_WINS: corto per sorgenti che vagano (es. ronzi di rete), lungo per quelle stabili.
+function holdForWindow(tr, W) {
+  const t0 = tr[0].t, t1 = tr[tr.length - 1].t;
+  let prevTau = 0, prevRms = 0;
+  for (const tau of HOLD_TAUS) {
+    const e2 = [];
+    const step = Math.max(1, (t1 - t0 - W - tau) / 60);
+    for (let ta = t0 + W; ta + tau <= t1 - 0.5; ta += step) {
+      const pts = span(tr, ta - W, ta);
+      if (pts.length < 0.6 * W / T_BLOCK) continue;
+      const fit = fitLine(pts);
+      const near = span(tr, ta + tau - 0.5, ta + tau + 0.5);
+      if (!fit || !near.length) continue;
+      let e = 0; for (const p of near) e += wrapPi(p.th - fit.at(p.t));
+      e /= near.length; e2.push(e * e);
+    }
+    if (e2.length < 5) break;
+    const rms = Math.sqrt(mean(e2));
+    if (rms > HOLD_PHI) {
+      if (!prevTau) return tau * Math.pow(HOLD_PHI / rms, 2 / 3);
+      // interpolazione log-log fra i due anticipi a cavallo della soglia
+      const g = Math.log(HOLD_PHI / prevRms) / Math.log(rms / Math.max(prevRms, 1e-4));
+      return prevTau * Math.pow(tau / prevTau, clamp(g, 0, 1));
+    }
+    prevTau = tau; prevRms = rms;
+  }
+  if (!prevTau) return null;
+  // soglia mai raggiunta nella storia disponibile: estrapolo (passeggiata casuale: errore ∝ τ^1,5),
+  // ma mai oltre il doppio di quanto verificato davvero
+  return clamp(prevTau * Math.pow(HOLD_PHI / Math.max(prevRms, 1e-3), 2 / 3), prevTau, 2 * prevTau);
+}
+function holdEstimate(ch) {
+  const tr = ch.track;
+  if (tr.length * T_BLOCK < HOLD_HISTORY) return null;
+  let best = null;
+  for (const W of HOLD_WINS) {
+    if (tr[tr.length - 1].t - tr[0].t < W + 15) break;
+    const h = holdForWindow(tr, W);
+    if (h != null && (best == null || h > best.h)) best = { h, W };
+  }
+  if (!best) return null;
+  ch.holdWin = best.W;
+  return best.h;
+}
+
+// Prima di spegnere il microfono: frequenza e fase dalla retta sugli ultimi 15 s invece che dal
+// valore istantaneo dell'aggancio (che oscilla di qualche centesimo di Hz e fa scivolare la fase in pochi secondi).
+function freezeTone(ch) {
+  const tr = ch.track, last = tr[tr.length - 1];
+  ch.frozen = null;
+  const W = ch.holdWin || 4;
+  const fit = last ? fitLine(span(tr, last.t - W, last.t)) : null;
+  if (!fit || fit.n < 0.6 * W / T_BLOCK) { setChFreq(ch, ch.fint); return; }
+  let c = ZERO;
+  for (const p of span(tr, last.t - 5, last.t)) c = cadd(c, cpolar(1, p.u));
+  const uRef = cang(c);                       // fase relativa per cui W era regolato
+  const uPred = fit.at(last.t) - last.ph;     // fase relativa prevista dalla retta
+  const rot = wrapPi(uPred - uRef);
+  if (Math.abs(rot) < Math.PI / 6) ch.W = cmul(ch.W, cpolar(1, rot));
+  ch.phref = uPred; ch.prevDh = null;
+  ch.fint = clamp(fit.f, ch.calFreq - 1.5, ch.calFreq + 1.5);
+  setChFreq(ch, ch.fint);
+  ch.frozen = { u: uPred, t: last.t };
+}
+const freezeTones = () => st.channels.filter(ch => ch.enabled && ch.S && cmag2(ch.W) > 0).forEach(freezeTone);
+
+// Alla riaccensione del microfono: di quanto è davvero scivolata la fase? Corregge le tenute successive.
+function measureSlip(ch, Dh) {
+  const slip = wrapPi(cang(Dh) - ch.frozen.u);
+  const after = ch.lastB.t - ch.frozen.t;
+  ch.frozen = null;
+  if (after < 3) return;
+  ch.lastSlip = { deg: Math.abs(slip) * 180 / Math.PI, after };
+  if (st.recheck === 'auto') {
+    if (Math.abs(slip) > 2 * HOLD_PHI) ch.holdScale = Math.max(0.2, ch.holdScale * 0.6);
+    else if (Math.abs(slip) < 0.5 * HOLD_PHI) ch.holdScale = Math.min(2, ch.holdScale * 1.25);
+  }
 }
 
 function autoRecalibrate(ch) {
@@ -788,7 +925,7 @@ function calibrate(chs) {
   if (!chs.length || !st.micOn) return Promise.resolve(false);
   return new Promise(resolve => {
     calSeq = { chs, phase: 0, count: 0, acc: chs.map(() => ({ off1: [], on: [], off2: [] })), noise: chs.map(() => []), resolve };
-    for (const ch of chs) { ch.state = 'calibrating'; ch.calW = ZERO; ch.freq = ch.fint; pushCh(ch); }
+    for (const ch of chs) { ch.state = 'calibrating'; ch.calW = ZERO; ch.freq = ch.fint; ch.track = []; ch.holdRaw = ch.holdSec = null; ch.holdScale = 1; ch.lastSlip = null; pushCh(ch); }
     scheduleRender();
   });
 }
@@ -871,8 +1008,8 @@ function recheckInterval() {
   if (st.recheckOverrideSec) return st.recheckOverrideSec;
   if (st.recheck === '0') return null;
   if (st.recheck !== 'auto') return parseFloat(st.recheck) * 60;
-  const hs = st.channels.filter(ch => ch.enabled && ch.S).map(ch => ch.holdSec || 240);
-  return clamp(0.5 * Math.min(...hs), 30, 600);
+  const hs = st.channels.filter(ch => ch.enabled && ch.S).map(ch => ch.holdSec || HOLD_MIN);
+  return clamp(Math.min(...hs), HOLD_MIN, 1800);
 }
 
 function holdLogic(t) {
@@ -881,8 +1018,20 @@ function holdLogic(t) {
   if (!act.length || !st.micOn) return;
   if (t < st.recheckUntil) return;
   if (!act.every(ch => ch.state === 'locked')) return;
-  // tutti stabili: freno la frequenza al valore medio e spengo il microfono
-  act.forEach(ch => { setChFreq(ch, ch.fint); updateHoldEstimate(ch); });
+  if (t < (st.holdEvalAt || 0)) return;
+  st.holdEvalAt = t + 5;
+  // quanto reggerebbe ogni tono senza microfono (misurato sulla sua storia di fase)
+  act.forEach(ch => { const h = holdEstimate(ch); if (h != null) ch.holdRaw = h; if (ch.holdRaw) ch.holdSec = ch.holdRaw * ch.holdScale; });
+  if (act.some(ch => ch.holdSec == null)) return;   // storia ancora troppo corta: aspetto
+  const worst = act.reduce((a, c) => (c.holdSec < a.holdSec ? c : a));
+  if (st.recheck === 'auto' && worst.holdSec < HOLD_MIN) {
+    st.message = 'Tengo il microfono acceso: il ronzio a ' + fmt(worst.freq, 1) + ' Hz cambia frequenza troppo in fretta, '
+      + 'senza microfono la cancellazione reggerebbe solo ~' + fmtDur(worst.holdSec) + '. Tipico dei ronzi legati alla rete (50/100 Hz).';
+    st.holdEvalAt = t + 20;
+    return;
+  }
+  // tutti stabili: frequenza e fase dalla storia recente, poi spengo il microfono
+  freezeTones();
   closeMic();
   st.micPaused = true;
   const iv = recheckInterval();
@@ -890,7 +1039,8 @@ function holdLogic(t) {
   if (iv) {
     st.nextCheck = t + iv;
     recheckTimer = setTimeout(recheck, iv * 1000);
-    st.message = 'Tutto stabile: microfono spento. Ricontrollo tra ' + fmtDur(iv) + '.';
+    st.message = 'Tutto stabile: microfono spento. Ricontrollo tra ' + fmtDur(iv) + '.'
+      + (st.recheck !== 'auto' && iv > worst.holdSec * 1.5 ? ' Attenzione: dalla deriva misurata la cancellazione regge ~' + fmtDur(worst.holdSec) + '.' : '');
   } else {
     st.message = 'Tutto stabile: microfono spento (nessun ricontrollo automatico).';
   }
@@ -1059,7 +1209,7 @@ function buildTone(ch) {
   q('.tf').addEventListener('change', (e) => {
     const f = parseFloat(String(e.target.value).replace(',', '.'));
     if (!isFinite(f)) return;
-    ch.fint = f; setChFreq(ch, f); ch.phref = null;
+    ch.fint = f; setChFreq(ch, f); ch.phref = null; ch.track = []; ch.holdRaw = ch.holdSec = null;
     if (ch.S && Math.abs(f - ch.calFreq) > 1) { ch.S = null; ch.state = 'new'; st.message = 'Frequenza cambiata di oltre 1 Hz: ricalibra questo tono.'; }
     save(); render();
   });
@@ -1115,10 +1265,21 @@ function renderTones() {
     el.querySelectorAll('.tn').forEach(b => b.disabled = !manual);
     if (document.activeElement !== q('.ta')) q('.ta').value = Math.max(db(cmag(ch.W)), -60);
     if (document.activeElement !== q('.tpp')) q('.tpp').value = ph;
-    let hold = '';
-    if (ch.state === 'locked' && ch.holdSec) hold = 'Senza microfono la cancellazione dovrebbe reggere circa ' + fmtDur(ch.holdSec) + ' (dalla deriva misurata della sorgente).';
-    if (ch.S && ch.state !== 'locked') hold = 'Percorso: ' + fmt(db(cmag(ch.S))) + ' dB, ' + fmt(((cang(ch.S) * 180 / Math.PI) + 360) % 360, 0) + '°';
-    q('.hold').textContent = hold;
+    const info = [];
+    if (ch.S) info.push('percorso cassa→mic ' + fmt(db(cmag(ch.S))) + ' dB');
+    if (ch.snrDb != null && st.micOn) info.push('ronzio sul fondo +' + fmt(ch.snrDb, 0) + ' dB');
+    if (ch.holdSec) info.push('senza microfono regge ~' + fmtDur(ch.holdSec));
+    if (ch.lastSlip) info.push('ultimo ricontrollo: fase scivolata di ' + fmt(ch.lastSlip.deg, 0) + '° in ' + fmtDur(ch.lastSlip.after));
+    const warn = [];
+    if (ch.limitN >= 8 && st.autoOn) warn.push('Uscita al massimo (' + fmt(db(st.maxAmp)) + ' dBFS): la cassa non riesce a produrre abbastanza ' + fmt(ch.freq, 0) + ' Hz. Alza il volume della cassa o il “volume massimo per tono”, o avvicinala al microfono.');
+    if (ch.snrDb != null && ch.snrDb < 12 && st.micOn && ch.S) warn.push('Il ronzio emerge poco dal rumore di fondo a questa frequenza: la cancellazione sarà parziale e più lenta.');
+    if (ch.S && cmag(ch.S) < 0.02 && ch.freq < 80) warn.push('A ' + fmt(ch.freq, 0) + ' Hz la cassa arriva debole al microfono (percorso sotto −34 dB): con casse piccole i bassi sotto 80 Hz quasi non escono.');
+    const hk = info.join(' · ') + '|' + warn.join('|');
+    const hb = q('.hold');
+    if (hb.dataset.h !== hk) {
+      hb.dataset.h = hk;
+      hb.innerHTML = info.join(' · ') + warn.map(w => '<div class="hwarn">' + w + '</div>').join('');
+    }
   }
 }
 
@@ -1266,8 +1427,15 @@ function wireUI() {
       const before = st.message;
       if (await openMic() && st.message === before) st.message = 'Microfono attivo: ' + st.micActive + '.';
     } else {
+      const holding = st.autoOn && st.outputOn;
+      if (holding) freezeTones();
       closeMic(); st.micWaiting = false; clearRecheck(); st.micPaused = false;
-      if (st.autoOn) { setAuto(false); st.message = 'Microfono spento: i toni restano fissi come sono (modalità manuale).'; }
+      if (st.autoOn) {
+        setAuto(false);
+        const hs = st.channels.filter(c => c.enabled && c.S && c.holdSec).map(c => c.holdSec);
+        st.message = 'Microfono spento: i toni continuano con frequenza e fase previste dalla storia recente (modalità manuale).'
+          + (hs.length ? ' Dalla deriva misurata la cancellazione regge ~' + fmtDur(Math.min(...hs)) + '.' : '');
+      }
     }
     render();
   });
@@ -1309,7 +1477,7 @@ if (SIM) $('simTag').hidden = false;
 render();
 
 // accesso per i test automatici
-window.__controfase = { st, sr: () => ctx && ctx.sampleRate, guided, setAuto, setOutput, openMic, closeMic, calibrate, addChannel, scan,
+window.__controfase = { st, simLog, sr: () => ctx && ctx.sampleRate, guided, setAuto, setOutput, openMic, closeMic, calibrate, addChannel, scan,
   simPump: (i, on) => node && node.port.postMessage({ type: 'simPump', index: i, on }) };
 </script>
 </body>
