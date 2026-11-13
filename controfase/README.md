@@ -23,6 +23,14 @@ o fisso) per verificare e correggere. Con l'intervallo automatico, se la sorgent
 frequenza troppo in fretta (tenuta sotto 30 s, tipico dei ronzi legati alla rete a 50/100 Hz)
 il microfono **resta acceso** e l'app lo dice.
 
+Quando la cancellazione è partita, **Modalità notte** lascia sullo schermo solo lo stato
+(“Silenzio”, il residuo, il prossimo ricontrollo) su un fondo quasi nero; Esc o “Esci dalla
+modalità notte” per tornare indietro.
+
+L'interfaccia è pensata per il computer: due colonne, scura e calda per l'uso al buio. Per
+ogni tono un'onda mostra il ronzio (ambra), il tono in controfase (azzurro tratteggiato) e
+il residuo al microfono (chiaro), che si appiattisce man mano che la cancellazione funziona.
+
 ## Come funziona
 
 Tutto il segnale passa per un unico `AudioWorklet`: toni e microfono condividono il

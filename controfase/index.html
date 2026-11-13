@@ -3,240 +3,340 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#14161a">
+<meta name="theme-color" content="#1C2030">
+<meta name="color-scheme" content="dark">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Controfase">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icon-512.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Recursive:CASL,MONO,wght@0..1,0..1,300..800&display=swap" rel="stylesheet">
 <title>Controfase</title>
 <style>
+  /* Notte: interfaccia scura e calda, da usare al buio. Ambra = ronzio, azzurro = controfase. */
   :root {
-    --bg: #f4f2ee; --card: #ffffff; --ink: #1d1f23; --muted: #6b6f78; --line: #e3e0da;
-    --accent: #2f6fed; --good: #1f9d57; --bad: #d4442e; --warn: #c98a12;
-    --track: #e6e3dd; --mono: ui-monospace, "SF Mono", Menlo, monospace;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #14161a; --card: #1d2026; --ink: #e9eaee; --muted: #9096a3; --line: #2c3038;
-      --accent: #6c9bff; --good: #3ccf7f; --bad: #ff6a52; --warn: #f0b43c; --track: #2c3038;
-    }
+    --notte: #1C2030; --velluto: #252A3D; --carta: #E6E1D3; --fumo: #9A9DB0;
+    --ronzio: #E8964A; --controfase: #B9DCE6; --riga: #343A52; --bordo: #6A7296; --hover: #2B3046;
+    --buio: #12141E; --buio-testo: #C9C4B8; --buio-fumo: #8D90A3; --buio-bordo: #5E6482;
+    --font: 'Recursive', system-ui, -apple-system, 'Segoe UI', sans-serif;
   }
   * { box-sizing: border-box; }
   [hidden] { display: none !important; }
-  html, body { margin: 0; background: var(--bg); color: var(--ink);
-    font: 14px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
-  main { max-width: 820px; margin: 0 auto; padding: 20px 18px 40px; }
-  header { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
-  h1 { font-size: 22px; margin: 0; letter-spacing: -0.01em; }
-  h1 span { color: var(--muted); font-weight: 400; font-size: 14px; margin-left: 8px; }
-  .top { display: grid; grid-template-columns: 1.2fr 1fr; gap: 12px; margin-bottom: 14px; }
-  .panel { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; }
-  .bigbtn { width: 100%; font-size: 16px; font-weight: 600; padding: 12px; border-radius: 10px; }
-  .status { margin-top: 10px; font-size: 13px; color: var(--muted); min-height: 38px; }
-  .status b { color: var(--ink); font-weight: 600; }
-  .kv { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; font-size: 13px; }
-  .kv .k { color: var(--muted); }
-  .kv .v { font-family: var(--mono); text-align: right; }
-  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 6px 16px 12px; margin-bottom: 14px; }
-  .card h2 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 10px 0 4px; font-weight: 600;
-    display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-  .row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-top: 1px solid var(--line); min-height: 44px; flex-wrap: wrap; }
-  .card h2 + .row, .card h2 + div > .row:first-child { border-top: none; }
-  .row > label, .row > .lbl { flex: 0 0 190px; }
-  .row .grow { flex: 1 1 220px; display: flex; align-items: center; gap: 10px; min-width: 0; flex-wrap: wrap; }
-  .num { font-family: var(--mono); font-variant-numeric: tabular-nums; min-width: 86px; text-align: right; }
-  .muted { color: var(--muted); }
-  .small { font-size: 12px; }
-  input[type=range] { flex: 1; accent-color: var(--accent); min-width: 120px; }
-  input[type=number] { font: 14px var(--mono); width: 110px; padding: 4px 8px; border-radius: 7px;
-    border: 1px solid var(--line); background: var(--bg); color: var(--ink); text-align: right; }
-  select { font: inherit; font-size: 13px; padding: 5px 8px; border-radius: 7px; border: 1px solid var(--line);
-    background: var(--bg); color: var(--ink); max-width: 100%; min-width: 0; flex: 1 1 200px; }
-  button { font: inherit; font-size: 13px; padding: 5px 10px; border-radius: 7px; border: 1px solid var(--line);
-    background: var(--bg); color: var(--ink); cursor: pointer; white-space: nowrap; }
-  button:hover:not(:disabled) { border-color: var(--accent); }
-  button:disabled { opacity: 0.45; cursor: default; }
-  button.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
-  button.ghost { background: transparent; }
-  .btns { display: flex; gap: 4px; flex-wrap: wrap; }
+  html, body { margin: 0; background: var(--notte); color: var(--carta); color-scheme: dark;
+    font: 16px/1.5 var(--font); -webkit-font-smoothing: antialiased; }
+  .num { font-variation-settings: "MONO" 1, "CASL" 0; font-variant-numeric: tabular-nums; }
+  .tab { font-variant-numeric: tabular-nums; }
+  .muted { color: var(--fumo); }
+  button, input, select, summary { font: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid var(--controfase); outline-offset: 3px; }
+  button { cursor: pointer; }
+  button:disabled { opacity: .45; cursor: default; }
+
+  .wrap { max-width: 1240px; margin: 0 auto; padding: 28px 48px 64px; display: flex; flex-direction: column; gap: 44px; }
+  header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; min-height: 44px; }
+  .brand { display: flex; align-items: center; gap: 12px; font-size: 21px; font-weight: 650; letter-spacing: -0.01em; }
+  .simtag { font-size: 13px; font-weight: 500; color: var(--ronzio); border: 1px solid var(--ronzio); border-radius: 12px; padding: 1px 10px; }
+  .micstatus { display: inline-flex; align-items: center; gap: 10px; font-size: 15px; color: var(--fumo); }
+  .led { width: 8px; height: 8px; border-radius: 50%; flex: 0 0 8px; border: 1.5px solid var(--fumo); }
+  .led.on { background: var(--controfase); border-color: var(--controfase); }
+
+  .cols { display: flex; flex-wrap: wrap; gap: 64px; align-items: flex-start; }
+  .main { flex: 999 1 640px; min-width: 0; display: flex; flex-direction: column; gap: 32px; }
+  .side { flex: 1 1 340px; min-width: 0; display: flex; flex-direction: column; gap: 40px; }
+
+  h1 { margin: 0; font-size: 48px; line-height: 1.08; font-weight: 560; letter-spacing: -0.02em; font-variation-settings: "CASL" 0.35; }
+  .sub { margin: 12px 0 0; max-width: 60ch; color: var(--fumo); font-size: 18px; }
+  h2 { margin: 0; font-size: 18px; font-weight: 600; }
+
+  .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+  .pri, .sec { min-height: 48px; padding: 0 24px; border-radius: 24px; font-size: 16px; white-space: nowrap; }
+  .pri { background: var(--carta); color: var(--notte); border: 1px solid var(--carta); font-weight: 620; }
+  .pri:hover:not(:disabled) { background: #fff; }
+  .sec { background: transparent; border: 1px solid var(--bordo); }
+  .sec:hover:not(:disabled), .small:hover:not(:disabled) { background: var(--hover); }
+  .quiet { min-height: 44px; padding: 0 12px; border: none; background: transparent; color: var(--fumo); font-size: 15px; }
+  .quiet:hover:not(:disabled) { color: var(--carta); }
+  .link { min-height: 44px; padding: 0; border: none; background: transparent; color: var(--controfase); font-size: 15px;
+    text-decoration: underline; text-underline-offset: 4px; }
+  .link:hover:not(:disabled) { color: var(--carta); }
+  .small { min-height: 40px; padding: 0 16px; border-radius: 20px; border: 1px solid var(--bordo); background: transparent; font-size: 14px; white-space: nowrap; }
+
+  .msg { margin: 0; max-width: 72ch; font-size: 15px; color: var(--carta); min-height: 1.5em; }
+
+  /* procedura guidata */
+  .steps { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 20px 8px; }
+  .steps li { flex: 1 1 150px; display: flex; flex-direction: column; gap: 8px; min-width: 0; color: var(--fumo); }
+  .steps .bar { height: 4px; border-radius: 2px; background: var(--riga); }
+  .steps .t { display: flex; gap: 8px; font-size: 15px; }
+  .steps .s { font-size: 14px; padding-left: 18px; }
+  .steps li.done .bar { background: var(--controfase); }
+  .steps li.done .t { color: var(--carta); }
+  .steps li.now .bar { background: var(--carta); }
+  .steps li.now .t { color: var(--carta); font-weight: 620; }
+  .steps li.now .s { color: var(--carta); }
+
+  /* toni */
+  .tones { display: flex; flex-direction: column; }
+  .tone { border-top: 1px solid var(--riga); padding: 28px 0 16px; display: flex; flex-direction: column; gap: 14px; }
+  .tone.off { opacity: .55; }
+  .tone .top { display: flex; flex-wrap: wrap; align-items: center; gap: 20px 40px; }
+  .tone .id { flex: 0 0 230px; display: flex; flex-direction: column; gap: 10px; }
+  .tone .fq { display: flex; align-items: baseline; gap: 8px; }
+  .tone .tf { width: 8ch; font-size: 34px; line-height: 1.05; font-weight: 500; letter-spacing: -0.02em; padding: 0 4px; margin: 0 -4px;
+    border: 1px solid transparent; border-radius: 6px; background: transparent; -moz-appearance: textfield; appearance: textfield; }
+  .tone .tf::-webkit-inner-spin-button, .tone .tf::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+  .tone .tf:not(:disabled):hover, .tone .tf:focus { border-color: var(--bordo); background: var(--velluto); }
+  .tone .tf:disabled { opacity: 1; cursor: default; }
+  .tone .hz { font-size: 16px; color: var(--fumo); }
+  .tone .st { display: inline-flex; align-items: center; gap: 8px; font-size: 15px; }
+  .tone .st .led { width: 9px; height: 9px; flex-basis: 9px; border-color: var(--carta); }
+  .tone .st .led.ok { background: var(--controfase); border-color: var(--controfase); }
+  .tone .st .led.idle { border-color: var(--fumo); }
+  .tone .red { display: flex; align-items: baseline; gap: 8px; }
+  .tone .red .v { font-size: 22px; font-weight: 500; }
+  .tone .red .k { font-size: 14px; color: var(--fumo); }
+  .tone .follow { font-size: 14px; color: var(--fumo); }
+  .wave { flex: 1 1 380px; min-width: 0; height: 120px; display: block; }
+  .note { display: flex; gap: 12px; align-items: flex-start; background: var(--velluto); border-radius: 8px; padding: 12px 16px; max-width: 72ch; font-size: 15px; }
+  .note svg { flex: 0 0 auto; margin-top: 2px; }
+  .note p { margin: 0; }
+  .note p + p { margin-top: 6px; }
+  details > summary { cursor: pointer; list-style: none; }
+  details > summary::-webkit-details-marker { display: none; }
+  .chev { transition: transform .15s; }
+  details[open] > summary .chev { transform: rotate(90deg); }
+  .tdet > summary { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; font-size: 15px; color: var(--fumo); }
+  .tdet > summary:hover { color: var(--carta); }
+  .tdet .body { display: flex; flex-direction: column; gap: 18px; padding: 8px 0 8px 22px; }
+  .stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px 24px; font-size: 15px; }
+  .stats span { display: flex; flex-direction: column; }
+  .stats .k { color: var(--fumo); font-size: 14px; }
+  .info { margin: 0; font-size: 14px; color: var(--fumo); max-width: 80ch; }
+  .row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; }
+  .row > .lbl { flex: 0 0 110px; font-size: 15px; color: var(--fumo); }
+  .row .grow { flex: 1 1 260px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; min-width: 0; }
+  .nudge { display: flex; flex-wrap: wrap; gap: 6px; }
+  .nudge button { min-height: 36px; padding: 0 10px; border-radius: 18px; border: 1px solid var(--bordo); background: transparent; font-size: 14px; }
+  .nudge button:hover:not(:disabled) { background: var(--hover); }
+  .empty { border-top: 1px solid var(--riga); padding: 24px 0; color: var(--fumo); }
+  .tonebar { border-top: 1px solid var(--riga); padding-top: 12px; display: flex; flex-wrap: wrap; gap: 4px 24px; }
+
+  /* lato */
+  .panel { display: flex; flex-direction: column; gap: 12px; }
+  .panel .head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  #spec { width: 100%; height: 200px; display: block; background: var(--velluto); border-radius: 8px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 24px; font-size: 14px; color: var(--fumo); }
+  .legend span { display: inline-flex; align-items: center; gap: 8px; }
+  .peaks { display: flex; flex-direction: column; }
+  .peak { display: flex; align-items: center; gap: 14px; min-height: 48px; border-top: 1px solid var(--riga); font-size: 15px; cursor: pointer; }
+  .peak input { width: 20px; height: 20px; margin: 0; accent-color: var(--controfase); cursor: pointer; flex: 0 0 auto; }
+  .peak .f { font-size: 20px; font-weight: 500; min-width: 7.5ch; }
+  .peak.sel .f { color: var(--ronzio); }
+  .peak .p { color: var(--fumo); font-size: 14px; }
+  .opts { display: flex; flex-direction: column; gap: 8px; }
+  .opt { display: flex; gap: 12px; align-items: flex-start; padding: 12px 16px; border-radius: 8px; border: 1px solid var(--bordo); cursor: pointer; }
+  .opt:hover { background: var(--hover); }
+  .opt:has(input:checked) { border-color: var(--controfase); background: var(--velluto); }
+  .opt input { margin: 4px 0 0; width: 16px; height: 16px; accent-color: var(--controfase); flex: 0 0 auto; }
+  .opt b { display: block; font-size: 15px; font-weight: 560; }
+  .opt small { display: block; font-size: 14px; color: var(--fumo); }
+  .field { display: flex; flex-direction: column; gap: 6px; font-size: 15px; }
+  .field .lab { display: flex; justify-content: space-between; gap: 12px; }
+  .field .lab .tab { color: var(--fumo); }
+  .field .help { font-size: 14px; color: var(--fumo); }
+  .field .line { display: flex; align-items: center; gap: 12px; }
+  .field > select { flex: none; width: 100%; }
+  select { font-size: 15px; min-height: 40px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--bordo); background: var(--velluto); max-width: 100%; min-width: 0; flex: 1 1 200px; }
+  input[type=range] { width: 100%; min-height: 28px; accent-color: var(--ronzio); }
+  .tone input[type=range] { flex: 1 1 200px; width: auto; }
   .switch { position: relative; width: 42px; height: 24px; flex: 0 0 42px; display: inline-block; }
-  .switch input { opacity: 0; width: 0; height: 0; }
-  .switch span { position: absolute; inset: 0; background: var(--track); border-radius: 24px; transition: .15s; cursor: pointer; }
-  .switch span::before { content: ""; position: absolute; width: 18px; height: 18px; left: 3px; top: 3px;
-    background: #fff; border-radius: 50%; transition: .15s; box-shadow: 0 1px 2px rgba(0,0,0,.25); }
-  .switch input:checked + span { background: var(--accent); }
-  .switch input:checked + span::before { transform: translateX(18px); }
-  .switch input:disabled + span { opacity: .45; cursor: default; }
-  canvas { width: 100%; display: block; border-radius: 8px; background: var(--bg); }
-  #spec { height: 170px; }
-  .msg { background: var(--card); border: 1px solid var(--line); border-left: 3px solid var(--accent);
-    border-radius: 10px; padding: 10px 14px; margin-bottom: 14px; min-height: 42px; }
-  .pill { font-size: 12px; padding: 2px 8px; border-radius: 99px; border: 1px solid var(--line); color: var(--muted); white-space: nowrap; }
-  .pill.ok { color: var(--good); border-color: var(--good); }
-  .pill.err { color: var(--warn); border-color: var(--warn); }
-  .pill.run { color: var(--accent); border-color: var(--accent); }
-  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
-  .chip { font-size: 12px; padding: 4px 8px; border-radius: 99px; border: 1px solid var(--line); background: var(--bg); }
-  .chip b { font-family: var(--mono); font-weight: 600; }
-  .chip.used { opacity: .5; }
-  .tone { border-top: 1px solid var(--line); padding: 10px 0; }
-  .tone:first-of-type { border-top: none; }
-  .tone .head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-  .dot { width: 10px; height: 10px; border-radius: 50%; flex: 0 0 10px; }
-  .tone .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 8px; }
-  .tone .stats div { background: var(--bg); border-radius: 8px; padding: 6px 8px; }
-  .tone .stats .k { font-size: 11px; color: var(--muted); }
-  .tone .stats .v { font: 600 15px var(--mono); }
-  .tone details { margin-top: 6px; }
-  .tone details summary { font-size: 12px; color: var(--muted); cursor: pointer; }
-  .tone .hold { font-size: 12px; color: var(--muted); margin-top: 6px; }
-  .tone .hold .hwarn { color: var(--warn); margin-top: 3px; }
-  .empty { color: var(--muted); padding: 10px 0; font-size: 13px; }
-  details.help { color: var(--muted); font-size: 13px; }
-  details.help summary { cursor: pointer; color: var(--ink); padding: 8px 0; }
-  details.help ol, details.help ul { padding-left: 20px; margin: 4px 0 10px; }
-  #startOverlay { position: fixed; inset: 0; background: color-mix(in srgb, var(--bg) 88%, transparent);
-    display: flex; align-items: center; justify-content: center; z-index: 10; backdrop-filter: blur(3px); }
-  #startOverlay .box { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 22px 24px; max-width: 420px; text-align: center; }
-  #startOverlay h3 { margin: 0 0 6px; }
-  #startOverlay p { color: var(--muted); margin: 0 0 16px; }
-  .simtag { color: var(--warn); font-size: 12px; }
-  @media (max-width: 680px) {
-    .top { grid-template-columns: 1fr; }
-    .row > label, .row > .lbl { flex-basis: 100%; }
-    .tone .stats { grid-template-columns: repeat(2, 1fr); }
+  .switch input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+  .switch span { position: absolute; inset: 0; background: var(--riga); border: 1px solid var(--bordo); border-radius: 24px; transition: .15s; pointer-events: none; }
+  .switch span::before { content: ""; position: absolute; width: 16px; height: 16px; left: 3px; top: 3px; background: var(--carta); border-radius: 50%; transition: .15s; }
+  .switch input:checked + span { background: var(--controfase); border-color: var(--controfase); }
+  .switch input:checked + span::before { transform: translateX(18px); background: var(--notte); }
+  .switch input:focus-visible + span { outline: 2px solid var(--controfase); outline-offset: 3px; }
+  .switch input:disabled + span { opacity: .45; }
+  .swrow { display: flex; align-items: center; justify-content: space-between; gap: 16px; font-size: 15px; min-height: 44px; }
+  .swrow small { display: block; color: var(--fumo); font-size: 14px; }
+  .adv > summary, .help > summary { display: flex; align-items: center; gap: 8px; min-height: 44px; font-size: 18px; font-weight: 600; }
+  .adv .body { display: flex; flex-direction: column; gap: 20px; padding-top: 12px; }
+  .help { color: var(--fumo); font-size: 15px; max-width: 76ch; }
+  .help > summary { color: var(--carta); }
+  .help ol, .help ul { padding-left: 22px; margin: 8px 0 12px; }
+  .help li + li { margin-top: 6px; }
+  .help b { color: var(--carta); font-weight: 560; }
+
+  /* avvio */
+  #startOverlay { position: fixed; inset: 0; background: color-mix(in srgb, var(--notte) 92%, transparent);
+    display: flex; align-items: center; justify-content: center; z-index: 30; backdrop-filter: blur(4px); padding: 24px; }
+  #startOverlay .box { max-width: 460px; display: flex; flex-direction: column; align-items: flex-start; gap: 16px; }
+  #startOverlay p { margin: 0; color: var(--fumo); font-size: 17px; }
+
+  /* modalità notte */
+  #night { position: fixed; inset: 0; z-index: 20; background: var(--buio); color: var(--buio-testo);
+    display: flex; flex-direction: column; justify-content: space-between; padding: 56px 72px 48px; }
+  #night .bar1 { display: flex; justify-content: space-between; align-items: center; gap: 16px; font-size: 15px; color: var(--buio-fumo); }
+  #night .mid { display: flex; flex-direction: column; align-items: center; gap: 28px; }
+  #night h2 { margin: 0; font-size: clamp(64px, 10vw, 120px); line-height: 1; font-weight: 300; letter-spacing: -0.03em; font-variation-settings: "CASL" 0.6; text-align: center; }
+  #night .resid { width: 100%; height: 80px; display: block; }
+  #night .nsub { margin: 0; font-size: 18px; color: var(--buio-fumo); text-align: center; max-width: 52ch; }
+  #night .bar2 { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 24px; }
+  #night .ntones { display: flex; flex-wrap: wrap; gap: 16px 40px; }
+  #night .ntones span { display: flex; flex-direction: column; gap: 2px; }
+  #night .ntones .f { font-size: 22px; }
+  #night .ntones .r { font-size: 14px; color: var(--buio-fumo); }
+  #night .nbtn { min-height: 48px; padding: 0 22px; border-radius: 24px; border: 1px solid var(--buio-bordo); background: transparent; color: var(--buio-testo); font-size: 15px; }
+  #night .nbtn:hover { background: #1B1E2B; }
+  #night .led.on { background: var(--controfase); border-color: var(--controfase); opacity: .8; }
+
+  @media (max-width: 760px) {
+    .wrap { padding: 20px 20px 48px; gap: 32px; }
+    h1 { font-size: 36px; }
+    .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    #night { padding: 32px 24px; }
   }
+  @media (prefers-reduced-motion: reduce) { *, *::before { transition: none !important; } }
 </style>
 </head>
 <body>
 <div id="startOverlay">
   <div class="box">
-    <h3>Controfase</h3>
-    <p>Trova i ronzii a bassa frequenza e li cancella con toni in controfase, verificando il risultato col microfono.</p>
-    <button class="primary" id="startBtn">Avvia l'audio</button>
+    <div class="brand"><svg width="36" height="24" viewBox="0 0 36 24" aria-hidden="true"><path d="M2 12 C 8 0, 12 0, 18 12 S 28 24, 34 12" fill="none" stroke="#E8964A" stroke-width="2.5" stroke-linecap="round"/><path d="M2 12 C 8 24, 12 24, 18 12 S 28 0, 34 12" fill="none" stroke="#B9DCE6" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="3 3"/></svg>Controfase</div>
+    <p>Trova i ronzi a bassa frequenza e li cancella con toni in controfase, verificando il risultato con il microfono.</p>
+    <button class="pri" id="startBtn">Avvia l'audio</button>
   </div>
 </div>
 
-<main>
+<div class="wrap">
   <header>
-    <h1>Controfase <span>cancellazione dei ronzi a bassa frequenza</span></h1>
-    <span id="simTag" class="simtag" hidden>SIMULAZIONE</span>
+    <div class="brand">
+      <svg width="36" height="24" viewBox="0 0 36 24" aria-hidden="true"><path d="M2 12 C 8 0, 12 0, 18 12 S 28 24, 34 12" fill="none" stroke="#E8964A" stroke-width="2.5" stroke-linecap="round"/><path d="M2 12 C 8 24, 12 24, 18 12 S 28 0, 34 12" fill="none" stroke="#B9DCE6" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="3 3"/></svg>
+      <span>Controfase</span>
+      <span id="simTag" class="simtag" hidden>Simulazione</span>
+    </div>
+    <span class="micstatus" role="status"><span class="led" id="micLed"></span><span id="micStatus">Microfono spento</span></span>
   </header>
 
-  <section class="top">
-    <div class="panel">
-      <button class="primary bigbtn" id="guideBtn">Trova e cancella</button>
-      <div class="status" id="status"></div>
-    </div>
-    <div class="panel">
-      <div class="kv">
-        <span class="k">Cancellazione</span><span class="v" id="sAuto">spenta</span>
-        <span class="k">Microfono</span><span class="v" id="sMic">spento</span>
-        <span class="k">Toni attivi</span><span class="v" id="sTones">0</span>
-        <span class="k">Prossimo controllo</span><span class="v" id="sNext">—</span>
+  <div class="cols">
+    <main class="main">
+      <div>
+        <h1 id="headline">Pronto a cercare i ronzi</h1>
+        <p class="sub" id="sub"></p>
       </div>
-    </div>
-  </section>
-
-  <div class="msg" id="msg"></div>
-
-  <section class="card">
-    <h2><span>Toni da cancellare</span>
-      <span class="btns">
-        <button id="calAllBtn" class="ghost">Calibra tutti</button>
-        <button id="addToneBtn" class="ghost">+ Aggiungi a mano</button>
-      </span>
-    </h2>
-    <div id="tones"></div>
-    <div class="row">
-      <label for="autoSw">Cancellazione automatica</label>
-      <div class="grow"><label class="switch"><input type="checkbox" id="autoSw"><span></span></label>
-        <span class="muted small">si regola da sola, poi si ferma quando è stabile</span></div>
-    </div>
-    <div class="row">
-      <label for="outSw">Uscita audio</label>
-      <div class="grow"><label class="switch"><input type="checkbox" id="outSw"><span></span></label>
-        <span class="muted small">spegne o riaccende tutti i toni</span></div>
-    </div>
-  </section>
-
-  <section class="card">
-    <h2><span>Spettro al microfono</span><button id="scanBtn" class="ghost">Rileva toni</button></h2>
-    <div class="row" style="border-top:none"><canvas id="spec" height="170"></canvas></div>
-    <div class="row"><div class="chips" id="peaks"><span class="muted small">Premi “Rileva toni” per cercare i ronzi presenti (20–500 Hz).</span></div></div>
-  </section>
-
-  <section class="card">
-    <h2><span>Dispositivi</span></h2>
-    <div class="row">
-      <label for="micSel">Microfono</label>
-      <div class="grow"><select id="micSel"></select><label class="switch" title="Microfono attivo"><input type="checkbox" id="micSw"><span></span></label></div>
-    </div>
-    <div class="row" id="outRow">
-      <label for="outSel">Altoparlante</label>
-      <div class="grow"><select id="outSel"></select></div>
-    </div>
-    <div class="row" id="outNote" hidden>
-      <span class="muted small">Questo browser non permette di scegliere l'altoparlante: il suono va sull'uscita di sistema. Per fissarlo usa Chrome (“Installa pagina come app”).</span>
-    </div>
-  </section>
-
-  <section class="card">
-    <h2><span>Impostazioni</span></h2>
-    <div class="row">
-      <label for="holdSel">Quando è stabile</label>
-      <div class="grow">
-        <select id="holdSel">
-          <option value="periodic">spegni il microfono e ricontrolla</option>
-          <option value="always">tieni il microfono sempre acceso</option>
-        </select>
-        <select id="recheckSel">
-          <option value="auto">intervallo automatico</option>
-          <option value="2">ogni 2 min</option>
-          <option value="5">ogni 5 min</option>
-          <option value="10">ogni 10 min</option>
-          <option value="20">ogni 20 min</option>
-          <option value="30">ogni 30 min</option>
-          <option value="0">mai (resta spento)</option>
-        </select>
+      <div class="actions">
+        <button class="pri" id="nightBtn" hidden>Modalità notte</button>
+        <button class="pri" id="guideBtn">Trova e cancella</button>
+        <button class="quiet" id="stopBtn" hidden>Ferma la cancellazione</button>
       </div>
-    </div>
-    <div class="row">
-      <label for="reactIn">Reattività</label>
-      <div class="grow"><input type="range" id="reactIn" min="0" max="100" step="1"><span class="num" id="reactVal"></span></div>
-    </div>
-    <div class="row">
-      <label for="maxIn">Volume massimo per tono</label>
-      <div class="grow"><input type="range" id="maxIn" min="-40" max="0" step="0.5"><span class="num" id="maxVal"></span></div>
-    </div>
-    <div class="row">
-      <label for="testIn">Livello tono di prova</label>
-      <div class="grow"><input type="range" id="testIn" min="-50" max="-6" step="1"><span class="num" id="testVal"></span></div>
-    </div>
-    <div class="row">
-      <label for="promIn">Sensibilità rilevamento</label>
-      <div class="grow"><input type="range" id="promIn" min="6" max="20" step="1"><span class="num" id="promVal"></span></div>
-    </div>
-  </section>
+      <ol class="steps" id="steps" aria-label="Passi della procedura" hidden></ol>
+      <p class="msg" id="msg" role="status" aria-live="polite"></p>
 
-  <details class="help">
-    <summary>Come funziona</summary>
-    <ol>
-      <li>Metti il microfono dove appoggi la testa e premi <b>Trova e cancella</b>: ascolta lo spettro, trova i ronzi, ne misura la frequenza esatta, calibra e avvia la cancellazione.</li>
-      <li>Il controllo fa passi grandi quando è lontano e sempre più piccoli vicino al minimo; quando il residuo smette di scendere si <b>ferma</b> (stato “stabile”). Un aggancio di fase continua a seguire le piccole derive di frequenza della sorgente.</li>
-      <li>Se scegli “spegni il microfono e ricontrolla”, quando tutti i toni sono stabili il microfono si chiude; ogni tanto si riapre qualche secondo per verificare e correggere.</li>
-      <li>Se il ronzio cambia o ti sposti, l'app riaggancia da sola; se il livello sale, si ferma e ricalibra.</li>
-    </ol>
-    <ul>
-      <li>La zona di silenzio è di circa 30–40 cm intorno al microfono; altrove il ronzio può aumentare.</li>
-      <li>Senza microfono l'app non può sapere se il ronzio ha cambiato fase: per questo ricontrolla. La tenuta stimata dipende da quanto “deriva” la sorgente.</li>
-      <li>Con il microfono spento, se il ronzio si ferma (es. la pompa si spegne) il tono resta acceso da solo fino al ricontrollo successivo, che lo spegne. Per sorgenti che si accendono e spengono spesso scegli un intervallo breve o il microfono sempre acceso.</li>
-      <li>Microfono e altoparlante vengono fissati alla prima accensione: collegare cuffie Bluetooth non li cambia. In Safari l'altoparlante segue sempre quello di sistema.</li>
-      <li>Usa un altoparlante cablato vicino alla testiera. Le vibrazioni che arrivano dal letto o dal pavimento non si cancellano con l'aria.</li>
-    </ul>
-  </details>
-</main>
+      <section class="tones" aria-label="Toni da cancellare">
+        <div id="tones"></div>
+        <div class="tonebar">
+          <button class="link" id="addToneBtn">Aggiungi un tono a mano</button>
+          <button class="link" id="calAllBtn">Ricalibra tutti</button>
+        </div>
+      </section>
+
+      <details class="help">
+        <summary><svg class="chev" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6 L15 12 L9 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Come funziona</summary>
+        <ol>
+          <li>Metti il microfono dove appoggi la testa e premi <b>Trova e cancella</b>: ascolta lo spettro, trova i ronzi, ne misura la frequenza esatta, calibra la cassa e avvia la cancellazione.</li>
+          <li>Il controllo fa passi grandi quando è lontano e sempre più piccoli vicino al minimo; quando il residuo smette di scendere si <b>ferma</b> (stato “stabile”). Un aggancio di fase continua a seguire le piccole derive di frequenza della sorgente.</li>
+          <li>Se scegli “Spegnilo e ricontrolla”, quando tutti i toni sono stabili il microfono si chiude e ogni tanto si riapre qualche secondo per verificare e correggere.</li>
+          <li>Se il ronzio cambia o ti sposti, l'app riaggancia da sola; se il livello sale, si ferma e ricalibra.</li>
+        </ol>
+        <ul>
+          <li>La zona di silenzio è di circa 30–40 cm intorno al microfono; altrove il ronzio può aumentare.</li>
+          <li>Senza microfono l'app non può sapere se il ronzio ha cambiato fase: per questo ricontrolla. La tenuta stimata dipende da quanto “deriva” la sorgente.</li>
+          <li>Con il microfono spento, se il ronzio si ferma (per esempio la pompa si spegne) il tono resta acceso da solo fino al ricontrollo successivo, che lo spegne. Per sorgenti che si accendono e spengono spesso scegli un intervallo breve o il microfono sempre acceso.</li>
+          <li>Microfono e altoparlante vengono fissati alla prima accensione: collegare cuffie Bluetooth non li cambia. In Safari l'altoparlante segue sempre quello di sistema.</li>
+          <li>Usa un altoparlante cablato vicino alla testiera. Le vibrazioni che arrivano dal letto o dal pavimento non si cancellano con l'aria.</li>
+        </ul>
+      </details>
+    </main>
+
+    <aside class="side">
+      <section class="panel">
+        <div class="head"><h2>Spettro al cuscino</h2><button class="small" id="scanBtn">Rileva toni</button></div>
+        <canvas id="spec" role="img" aria-label="Spettro del microfono da 20 a 500 Hz"></canvas>
+        <div class="legend" id="legend" hidden>
+          <span><svg width="20" height="4" aria-hidden="true"><line x1="0" y1="2" x2="20" y2="2" stroke="#E8964A" stroke-width="2" stroke-dasharray="4 3"/></svg>Prima</span>
+          <span><svg width="20" height="4" aria-hidden="true"><line x1="0" y1="2" x2="20" y2="2" stroke="#E6E1D3" stroke-width="2"/></svg>Adesso</span>
+        </div>
+        <div class="peaks" id="peaks"><p class="muted" style="margin:0;font-size:14px">Premi “Rileva toni” per cercare i ronzi presenti fra 20 e 500 Hz.</p></div>
+      </section>
+
+      <section class="panel">
+        <h2>Quando è tutto stabile</h2>
+        <div class="opts" role="radiogroup" aria-label="Quando è tutto stabile">
+          <label class="opt"><input type="radio" name="hold" value="always"><span><b>Tieni il microfono acceso</b><small>Corregge di continuo. Serve per i ronzi della rete elettrica, che derivano in pochi secondi.</small></span></label>
+          <label class="opt"><input type="radio" name="hold" value="periodic"><span><b>Spegnilo e ricontrolla</b><small>Si riapre ogni tanto per verificare.</small></span></label>
+        </div>
+        <div class="field" id="recheckRow">
+          <label class="lab" for="recheckSel"><span>Ricontrolla</span></label>
+          <select id="recheckSel">
+            <option value="auto">con intervallo automatico, dalla tenuta misurata</option>
+            <option value="2">ogni 2 minuti</option>
+            <option value="5">ogni 5 minuti</option>
+            <option value="10">ogni 10 minuti</option>
+            <option value="20">ogni 20 minuti</option>
+            <option value="30">ogni 30 minuti</option>
+            <option value="0">mai, resta spento</option>
+          </select>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Dispositivi</h2>
+        <div class="field">
+          <label class="lab" for="micSel"><span>Microfono</span></label>
+          <div class="line"><select id="micSel"></select><label class="switch" title="Microfono acceso"><input type="checkbox" id="micSw" aria-label="Microfono acceso"><span></span></label></div>
+        </div>
+        <div class="field" id="outRow">
+          <label class="lab" for="outSel"><span>Altoparlante</span></label>
+          <select id="outSel"></select>
+        </div>
+        <p class="muted" id="outNote" style="margin:0;font-size:14px" hidden>Questo browser non permette di scegliere l'altoparlante: il suono va sull'uscita di sistema. Per fissarlo usa Chrome (“Installa pagina come app”).</p>
+      </section>
+
+      <details class="adv">
+        <summary><svg class="chev" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6 L15 12 L9 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Regolazioni avanzate</summary>
+        <div class="body">
+          <div class="swrow"><label for="autoSw">Cancellazione automatica<small>Si regola da sola, poi si ferma quando è stabile.</small></label><label class="switch"><input type="checkbox" id="autoSw"><span></span></label></div>
+          <div class="swrow"><label for="outSw">Uscita audio<small>Spegne o riaccende tutti i toni.</small></label><label class="switch"><input type="checkbox" id="outSw"><span></span></label></div>
+          <label class="field"><span class="lab"><span>Reattività</span><span class="tab" id="reactVal"></span></span><input type="range" id="reactIn" min="0" max="100" step="1"><span class="help">Più alta segue prima i cambiamenti, ma si ferma meno.</span></label>
+          <label class="field"><span class="lab"><span>Volume massimo per tono</span><span class="tab" id="maxVal"></span></span><input type="range" id="maxIn" min="-40" max="0" step="0.5"><span class="help">Limite di sicurezza per la cassa.</span></label>
+          <label class="field"><span class="lab"><span>Livello del tono di prova</span><span class="tab" id="testVal"></span></span><input type="range" id="testIn" min="-50" max="-6" step="1"><span class="help">Usato solo durante la calibrazione.</span></label>
+          <label class="field"><span class="lab"><span>Sensibilità del rilevamento</span><span class="tab" id="promVal"></span></span><input type="range" id="promIn" min="6" max="20" step="1"><span class="help">Quanto deve spiccare un picco sopra il fondo per essere preso.</span></label>
+        </div>
+      </details>
+    </aside>
+  </div>
+</div>
+
+<div id="night" hidden role="dialog" aria-modal="true" aria-labelledby="nightTitle">
+  <div class="bar1">
+    <span class="micstatus" style="color:inherit"><span class="led" id="nightLed"></span><span id="nightMic"></span></span>
+    <span class="tab" id="nightClock"></span>
+  </div>
+  <div class="mid">
+    <h2 id="nightTitle">Silenzio</h2>
+    <svg class="resid" viewBox="0 0 1136 80" preserveAspectRatio="none" aria-hidden="true"><path id="nightLine" fill="none" stroke="#C9C4B8" stroke-width="1.5" opacity="0.55" vector-effect="non-scaling-stroke"/></svg>
+    <p class="nsub" id="nightSub"></p>
+  </div>
+  <div class="bar2">
+    <div class="ntones" id="nightTones"></div>
+    <div class="actions">
+      <button class="nbtn" id="nightStop">Ferma tutto</button>
+      <button class="nbtn" id="nightExit">Esci dalla modalità notte</button>
+    </div>
+  </div>
+</div>
 
 <script type="text/worklet" id="workletSrc">
 const PROBE = 8;          // Hz: sonde di rumore a ±8 Hz (zeri della finestra di Hann da 0,25 s)
@@ -421,7 +521,7 @@ const st = {
   ready: false, micOn: false, micPaused: false, micWaiting: false, outputOn: false, autoOn: false,
   micId: '', micLabel: '', outId: '', outLabel: '', inputs: [], outputs: [], canSink: false, micActive: '',
   react: 40, maxAmp: undb(-6), testDb: -26, minProm: 10, holdMode: 'periodic', recheck: 'auto',
-  channels: [], peaks: [], spec: null, specHz: 0, guideText: null, message: '',
+  channels: [], peaks: [], spec: null, specHz: 0, guideText: null, guideStep: null, specBefore: null, message: '',
   nextCheck: null, recheckUntil: 0, totalDb: null, settle: 0,
   recalLog: [], recheckOverrideSec: null
 };
@@ -1082,6 +1182,7 @@ function pollSpectrum() {
     if (++scanAcc.n >= scanAcc.need) {
       const peaks = detectPeaks(scanAcc.sum, scanAcc.n);
       st.peaks = peaks;
+      if (!st.outputOn) st.specBefore = Array.from(scanAcc.sum, v => 10 * Math.log10(v / scanAcc.n + 1e-30));   // spettro "prima" per il confronto
       const r = scanAcc.res; scanAcc = null; r(peaks);
     }
   }
@@ -1128,25 +1229,25 @@ async function guided() {
   if (st.guideText) return;
   try {
     await ensureAudio();
-    st.guideText = 'Preparo…'; render();
+    st.guideStep = 0; st.guideText = 'Preparo…'; render();
     if (st.micPaused) { clearRecheck(); st.micPaused = false; }
     if (!st.micOn && !(await openMic())) throw new Error(st.message);
     setAuto(false);
     setOutput(false);
     await waitBlocks(3);
 
-    st.guideText = 'Ascolto lo spettro (8 s)…'; render();
+    st.guideStep = 1; st.guideText = 'Ascolto lo spettro (8 s)…'; render();
     const peaks = await scan(8);
     const fresh = peaks.filter(p => !st.channels.some(ch => Math.abs(ch.freq - p.f) < MIN_SPACING));
     for (const p of fresh.slice(0, Math.max(0, 3 - st.channels.filter(c => c.enabled).length))) addChannel(p.f);
     const chs = st.channels.filter(ch => ch.enabled);
     if (!chs.length) { st.message = 'Non ho trovato ronzi evidenti. Abbassa la “sensibilità rilevamento” o aggiungi un tono a mano.'; return; }
 
-    st.guideText = 'Misuro la frequenza esatta di ' + chs.map(c => fmt(c.freq, 1) + ' Hz').join(', ') + ' (12 s)…'; render();
+    st.guideStep = 2; st.guideText = 'Misuro la frequenza esatta di ' + chs.map(c => fmt(c.freq, 1) + ' Hz').join(', ') + ' (12 s)…'; render();
     chs.forEach(ch => { ch.phref = null; ch.fint = ch.freq; ch.calFreq = ch.freq; ch.S = null; ch.state = 'new'; });
     await waitBlocks(48);
 
-    st.guideText = 'Calibro altoparlante → microfono (8 s)…'; render();
+    st.guideStep = 3; st.guideText = 'Calibro la cassa: tono di prova e misura al microfono (8 s)…'; render();
     await calibrate(chs);
     if (!chs.some(ch => ch.S)) { st.message = 'Calibrazione non riuscita: alza il “livello tono di prova” o il volume e riprova.'; return; }
 
@@ -1156,7 +1257,7 @@ async function guided() {
   } catch (e) {
     st.message = 'Procedura interrotta: ' + e.message;
   } finally {
-    st.guideText = null;
+    st.guideText = null; st.guideStep = null;
     render();
   }
 }
@@ -1169,46 +1270,107 @@ function scheduleRender() {
   renderPending = true;
   requestAnimationFrame(() => { renderPending = false; render(); });
 }
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const MINUS = '−';
+const sdb = (v, d = 0) => (v < 0 ? MINUS : '') + fmt(Math.abs(v), d) + ' dB';
+const CHEV = '<svg class="chev" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6 L15 12 L9 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+const WARN_ICON = '<svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 L22 20 H2 Z" fill="none" stroke="#E6E1D3" stroke-width="1.8" stroke-linejoin="round"/><path d="M12 10 V14 M12 17 V17.5" stroke="#E6E1D3" stroke-width="1.8" stroke-linecap="round"/></svg>';
 
-const STATE_TXT = { new: ['da calibrare', ''], calibrating: ['calibrazione…', 'run'], ready: ['calibrato', ''],
-  adapting: ['ricerca', 'run'], locked: ['stabile', 'ok'], failed: ['non riuscito', 'err'] };
+const ui = { stableSince: null, night: false };
 
+// stato del tono: testo e spia (ok = stabile, run = al lavoro, idle = fermo)
 function toneState(ch) {
-  if (ch.state === 'adapting') return ch.K > 0.1 ? ['ricerca', 'run'] : ['affinamento', 'run'];
-  if (ch.state === 'locked' && st.micPaused) return ['stabile · mic spento', 'ok'];
-  return STATE_TXT[ch.state] || [ch.state, ''];
+  if (!ch.enabled) return ['Disattivato', 'idle'];
+  switch (ch.state) {
+    case 'new': return ['Da calibrare', 'idle'];
+    case 'calibrating': return ['Calibrazione in corso', 'run'];
+    case 'ready': return ['Calibrato, in attesa', 'idle'];
+    case 'adapting': return ch.K > 0.1 ? ['Cerca la controfase', 'run'] : ['Si sta affinando', 'run'];
+    case 'locked': return st.micPaused ? ['Stabile, microfono spento', 'ok'] : ['Stabile', 'ok'];
+    case 'failed': return ['Calibrazione non riuscita', 'idle'];
+    default: return [ch.state, 'idle'];
+  }
+}
+
+// riduzione attuale del tono, o l'ultima misurata se il microfono è in pausa
+function toneReduction(ch) {
+  const live = (ch.baseline != null && ch.level != null && st.micOn && st.outputOn && ch.enabled && cmag(ch.W) > 0) ? ch.baseline - ch.level : null;
+  if (live != null) { ch.uiRed = live; return { v: live, live: true }; }
+  if (st.micPaused && ch.uiRed != null && st.outputOn && ch.enabled) return { v: ch.uiRed, live: false };
+  return null;
+}
+
+// onde: ronzio (ambra), controfase (azzurro tratteggiato), residuo (carta)
+function sinePath(cycles, amp, phase, wobble, seed) {
+  const w = 600, mid = 60, n = 240;
+  let d = '';
+  for (let i = 0; i <= n; i++) {
+    const th = (i / n) * cycles * 2 * Math.PI + phase;
+    const y = mid - amp * Math.sin(th) - wobble * Math.sin(th * 0.37 + seed) * Math.sin(th * 2.1);
+    d += (i ? 'L' : 'M') + (i / n * w).toFixed(1) + ' ' + y.toFixed(1);
+  }
+  return d;
+}
+function updateWave(el, ch, red) {
+  const A = 44, cycles = clamp(ch.freq / 33, 1.5, 4);
+  const playing = st.outputOn && ch.enabled && cmag(effW(ch)) > 0;
+  const r = red == null ? null : Math.max(0, red.v);
+  const key = [cycles.toFixed(2), playing, r == null ? 'x' : Math.round(r)].join('|');
+  if (el.dataset.wave === key) return;
+  el.dataset.wave = key;
+  const q = (s) => el.querySelector(s);
+  const ra = r == null ? (playing ? A * 0.5 : A) : A * Math.pow(10, -r / 20);
+  q('.ph').setAttribute('d', sinePath(cycles, A, 0, 0, 0));
+  q('.pa').setAttribute('d', playing ? sinePath(cycles, Math.max(0, A - ra), Math.PI, 0, 0) : '');
+  q('.pr').setAttribute('d', playing ? sinePath(cycles, ra, 0.6, ra * 0.5, ch.id) : '');
+  q('.wave').setAttribute('aria-label', !playing ? 'Ronzio a ' + fmt(ch.freq, 2) + ' Hz, nessun tono in uscita'
+    : 'Ronzio a ' + fmt(ch.freq, 2) + ' Hz e controfase' + (r == null ? '' : ': il residuo è ' + fmt(r, 0) + ' dB più basso'));
 }
 
 function buildTone(ch) {
-  const el = document.createElement('div');
+  const el = document.createElement('article');
   el.className = 'tone'; el.dataset.id = ch.id;
   el.innerHTML = `
-    <div class="head">
-      <span class="dot" style="background:${ch.color}"></span>
-      <input type="number" step="0.001" min="15" max="1000" class="tf"> <span class="muted">Hz</span>
-      <span class="pill tp"></span>
-      <span class="muted small tfm"></span>
-      <span style="flex:1"></span>
-      <label class="switch" title="Tono attivo"><input type="checkbox" class="ten"><span></span></label>
-      <button class="ghost tcal">Calibra</button>
-      <button class="ghost tdel" title="Rimuovi">✕</button>
+    <div class="top">
+      <div class="id">
+        <div class="fq"><input type="text" inputmode="decimal" class="tf num" aria-label="Frequenza del tono in hertz"><span class="hz">Hz</span></div>
+        <span class="st"><span class="led"></span><span class="stv"></span></span>
+        <span class="red"><span class="v num"></span><span class="k"></span></span>
+        <span class="follow"></span>
+      </div>
+      <svg class="wave" viewBox="0 0 600 120" preserveAspectRatio="none" role="img">
+        <line x1="0" y1="60" x2="600" y2="60" stroke="#2E3348" stroke-width="1"/>
+        <path class="ph" fill="none" stroke="#E8964A" stroke-width="2" vector-effect="non-scaling-stroke"/>
+        <path class="pa" fill="none" stroke="#B9DCE6" stroke-width="2" stroke-dasharray="6 6" vector-effect="non-scaling-stroke"/>
+        <path class="pr" fill="none" stroke="#E6E1D3" stroke-width="3" stroke-linecap="round" vector-effect="non-scaling-stroke"/>
+      </svg>
     </div>
-    <div class="stats">
-      <div><div class="k">Livello al microfono</div><div class="v tl">—</div></div>
-      <div><div class="k">Riduzione</div><div class="v tr">—</div></div>
-      <div><div class="k">Tono in uscita</div><div class="v to">—</div></div>
-      <div><div class="k">Fase</div><div class="v tph">—</div></div>
-    </div>
-    <div class="hold"></div>
-    <details><summary>Regolazione manuale</summary>
-      <div class="row"><span class="lbl">Ampiezza</span><div class="grow"><input type="range" min="-60" max="0" step="0.1" class="ta"></div></div>
-      <div class="row"><span class="lbl">Fase</span><div class="grow"><input type="range" min="0" max="360" step="0.1" class="tpp">
-        <span class="btns"><button class="tn" data-d="-10">−10°</button><button class="tn" data-d="-1">−1°</button><button class="tn" data-d="1">+1°</button><button class="tn" data-d="10">+10°</button><button class="tn" data-d="180">+180°</button></span></div></div>
+    <div class="note" role="note" hidden>${WARN_ICON}<div class="nt"></div></div>
+    <details class="tdet">
+      <summary>${CHEV}Dettagli e regolazione</summary>
+      <div class="body">
+        <div class="stats tab">
+          <span><span class="k">Al microfono</span><span class="tl">—</span></span>
+          <span><span class="k">Tono in uscita</span><span class="to">—</span></span>
+          <span><span class="k">Fase</span><span class="tph">—</span></span>
+          <span><span class="k">Tenuta senza microfono</span><span class="thold">—</span></span>
+        </div>
+        <p class="info"></p>
+        <div class="row">
+          <label class="swrow" style="gap:12px;min-height:40px"><span class="switch"><input type="checkbox" class="ten"><span></span></span>Tono attivo</label>
+          <button class="small tcal">Ricalibra</button>
+          <button class="quiet tdel">Togli questo tono</button>
+        </div>
+        <div class="row"><span class="lbl">Ampiezza</span><div class="grow"><input type="range" min="-60" max="0" step="0.1" class="ta" aria-label="Ampiezza del tono"></div></div>
+        <div class="row"><span class="lbl">Fase</span><div class="grow"><input type="range" min="0" max="360" step="0.1" class="tpp" aria-label="Fase del tono">
+          <span class="nudge"><button class="tn" data-d="-10">${MINUS}10°</button><button class="tn" data-d="-1">${MINUS}1°</button><button class="tn" data-d="1">+1°</button><button class="tn" data-d="10">+10°</button><button class="tn" data-d="180">+180°</button></span></div></div>
+        <p class="info manualhint">La regolazione a mano funziona con la cancellazione automatica spenta (Regolazioni avanzate).</p>
+      </div>
     </details>`;
   const q = (s) => el.querySelector(s);
   q('.tf').addEventListener('change', (e) => {
     const f = parseFloat(String(e.target.value).replace(',', '.'));
-    if (!isFinite(f)) return;
+    if (!isFinite(f) || f < 15 || f > 1000) { st.message = 'Scrivi una frequenza fra 15 e 1000 Hz.'; render(); return; }
     ch.fint = f; setChFreq(ch, f); ch.phref = null; ch.track = []; ch.holdRaw = ch.holdSec = null;
     if (ch.S && Math.abs(f - ch.calFreq) > 1) { ch.S = null; ch.state = 'new'; st.message = 'Frequenza cambiata di oltre 1 Hz: ricalibra questo tono.'; }
     save(); render();
@@ -1232,86 +1394,170 @@ function buildTone(ch) {
   return el;
 }
 
+function setText(el, t) { if (el.textContent !== t) el.textContent = t; }
+
 function renderTones() {
   const box = $('tones');
   const ids = new Set(st.channels.map(c => String(c.id)));
   box.querySelectorAll('.tone').forEach(el => { if (!ids.has(el.dataset.id)) el.remove(); });
   let empty = box.querySelector('.empty');
   if (!st.channels.length) {
-    if (!empty) { empty = document.createElement('div'); empty.className = 'empty'; empty.textContent = 'Nessun tono. Premi “Trova e cancella”, oppure “Rileva toni” nello spettro.'; box.appendChild(empty); }
+    if (!empty) { empty = document.createElement('div'); empty.className = 'empty'; empty.textContent = 'Nessun ronzio da cancellare. Premi “Trova e cancella”, oppure “Rileva toni” accanto allo spettro.'; box.appendChild(empty); }
   } else if (empty) empty.remove();
+  const busy = !!calSeq || !!st.guideText;
   for (const ch of st.channels) {
     let el = box.querySelector(`.tone[data-id="${ch.id}"]`);
     if (!el) { el = buildTone(ch); box.appendChild(el); }
     const q = (s) => el.querySelector(s);
-    if (document.activeElement !== q('.tf')) q('.tf').value = ch.freq.toFixed(3);
+    el.classList.toggle('off', !ch.enabled);
+    if (document.activeElement !== q('.tf')) { const v = ch.freq.toFixed(3).replace('.', ','); q('.tf').value = v; q('.tf').style.width = (v.length + 0.4) + 'ch'; }
     q('.tf').disabled = st.autoOn && ch.S != null;
-    const [txt, cls] = toneState(ch);
-    q('.tp').textContent = ch.enabled ? txt : 'disattivato';
-    q('.tp').className = 'pill tp' + (ch.enabled ? (cls ? ' ' + cls : '') : '');
-    q('.tfm').textContent = (st.micOn && ch.enabled && Math.abs(ch.fint - ch.calFreq) > 0.0005) ? 'segue ' + fmt(ch.fint, 3) + ' Hz' : '';
+    const [txt, led] = toneState(ch);
+    setText(q('.stv'), txt);
+    q('.st .led').className = 'led ' + led;
+    const red = toneReduction(ch);
+    setText(q('.red .v'), red ? sdb(-red.v) : '');
+    setText(q('.red .k'), red ? (red.live ? 'rispetto a prima' : 'all’ultimo controllo') : '');
+    setText(q('.follow'), (st.micOn && ch.enabled && Math.abs(ch.fint - ch.calFreq) > 0.0005) ? 'Segue la sorgente a ' + fmt(ch.fint, 3) + ' Hz' : '');
+    updateWave(el, ch, red);
+
     q('.ten').checked = ch.enabled;
-    q('.tcal').disabled = !!calSeq || !!st.guideText;
-    q('.tl').textContent = ch.level == null || !st.micOn ? '—' : fmt(ch.level) + ' dB';
-    const red = (ch.baseline != null && ch.level != null && st.micOn && st.outputOn && ch.enabled && cmag(ch.W) > 0) ? ch.baseline - ch.level : null;
-    q('.tr').textContent = red == null ? '—' : fmt(red) + ' dB';
-    q('.tr').style.color = red == null ? '' : red > 0 ? 'var(--good)' : 'var(--bad)';
+    q('.tcal').disabled = busy;
+    setText(q('.tl'), ch.level == null || !st.micOn ? '—' : sdb(ch.level, 1));
     const w = effW(ch);
-    q('.to').textContent = cmag(w) > 0 ? fmt(db(cmag(w))) + ' dB' : 'spento';
+    setText(q('.to'), cmag(w) > 0 ? sdb(db(cmag(w)), 1) : 'spento');
     let ph = cang(ch.W) * 180 / Math.PI; if (ph < 0) ph += 360;
-    q('.tph').textContent = cmag(ch.W) > 0 ? fmt(ph, 0) + '°' : '—';
+    setText(q('.tph'), cmag(ch.W) > 0 ? fmt(ph, 0) + '°' : '—');
+    setText(q('.thold'), ch.holdSec ? fmtDur(ch.holdSec) : 'ancora da misurare');
     const manual = !st.autoOn;
     q('.ta').disabled = !manual; q('.tpp').disabled = !manual;
     el.querySelectorAll('.tn').forEach(b => b.disabled = !manual);
+    q('.manualhint').hidden = manual;
     if (document.activeElement !== q('.ta')) q('.ta').value = Math.max(db(cmag(ch.W)), -60);
     if (document.activeElement !== q('.tpp')) q('.tpp').value = ph;
+
     const info = [];
-    if (ch.S) info.push('percorso cassa→mic ' + fmt(db(cmag(ch.S))) + ' dB');
-    if (ch.snrDb != null && st.micOn) info.push('ronzio sul fondo +' + fmt(ch.snrDb, 0) + ' dB');
-    if (ch.holdSec) info.push('senza microfono regge ~' + fmtDur(ch.holdSec));
-    if (ch.lastSlip) info.push('ultimo ricontrollo: fase scivolata di ' + fmt(ch.lastSlip.deg, 0) + '° in ' + fmtDur(ch.lastSlip.after));
+    if (ch.S) info.push('Percorso cassa→microfono ' + sdb(db(cmag(ch.S)), 1) + '.');
+    if (ch.snrDb != null && st.micOn) info.push('Il ronzio emerge di ' + fmt(ch.snrDb, 0) + ' dB dal fondo.');
+    if (ch.lastSlip) info.push('All’ultimo ricontrollo la fase era scivolata di ' + fmt(ch.lastSlip.deg, 0) + '° in ' + fmtDur(ch.lastSlip.after) + '.');
+    setText(q('.info'), info.join(' '));
+
     const warn = [];
-    if (ch.limitN >= 8 && st.autoOn) warn.push('Uscita al massimo (' + fmt(db(st.maxAmp)) + ' dBFS): la cassa non riesce a produrre abbastanza ' + fmt(ch.freq, 0) + ' Hz. Alza il volume della cassa o il “volume massimo per tono”, o avvicinala al microfono.');
+    if (ch.limitN >= 8 && st.autoOn) warn.push('L’uscita è al massimo (' + sdb(db(st.maxAmp), 1) + 'FS): la cassa non riesce a produrre abbastanza ' + fmt(ch.freq, 0) + ' Hz. Alza il volume della cassa o il “volume massimo per tono”, oppure avvicinala al cuscino.');
     if (ch.snrDb != null && ch.snrDb < 12 && st.micOn && ch.S) warn.push('Il ronzio emerge poco dal rumore di fondo a questa frequenza: la cancellazione sarà parziale e più lenta.');
-    if (ch.S && cmag(ch.S) < 0.02 && ch.freq < 80) warn.push('A ' + fmt(ch.freq, 0) + ' Hz la cassa arriva debole al microfono (percorso sotto −34 dB): con casse piccole i bassi sotto 80 Hz quasi non escono.');
-    const hk = info.join(' · ') + '|' + warn.join('|');
-    const hb = q('.hold');
-    if (hb.dataset.h !== hk) {
-      hb.dataset.h = hk;
-      hb.innerHTML = info.join(' · ') + warn.map(w => '<div class="hwarn">' + w + '</div>').join('');
-    }
+    if (ch.S && cmag(ch.S) < 0.02 && ch.freq < 80) warn.push('A ' + fmt(ch.freq, 0) + ' Hz la cassa arriva debole al microfono: con casse piccole i bassi sotto 80 Hz quasi non escono.');
+    const hk = warn.join('|');
+    const nb = q('.note');
+    if (nb.dataset.h !== hk) { nb.dataset.h = hk; q('.nt').innerHTML = warn.map(w => '<p>' + esc(w) + '</p>').join(''); nb.hidden = !warn.length; }
   }
 }
 
-function fillSelect(sel, list, cur, defLabel, kindName) {
-  const html = [`<option value="">${defLabel}</option>`].concat(list.map((d, i) =>
-    `<option value="${d.deviceId}">${(d.label || kindName + ' ' + (i + 1)).replace(/</g, '&lt;')}</option>`));
-  if (cur && !list.some(d => d.deviceId === cur)) html.push(`<option value="${cur}">${(kindName === 'Microfono' ? st.micLabel : st.outLabel) || 'scelto'} (scollegato)</option>`);
-  const s = html.join('');
-  if (sel.dataset.h !== s) { sel.innerHTML = s; sel.dataset.h = s; }
-  if (document.activeElement !== sel) sel.value = cur || '';
+// ronzi trovati nello spettro: una spunta per ciascuno
+function renderPeaks() {
+  const box = $('peaks');
+  if (!st.peaks.length) return;
+  const busy = !!st.guideText || !!calSeq;
+  const rows = st.peaks.map((p, i) => {
+    const ch = st.channels.find(c => Math.abs(c.freq - p.f) < MIN_SPACING);
+    return { i, p, ch, on: !!ch };
+  });
+  const h = rows.map(r => r.p.f.toFixed(2) + (r.on ? '+' : '-')).join(',') + (busy ? 'b' : '');
+  if (box.dataset.h === h) return;
+  box.dataset.h = h;
+  box.innerHTML = rows.map(r => `<label class="peak${r.on ? ' sel' : ''}"><input type="checkbox" data-i="${r.i}" ${r.on ? 'checked' : ''} ${busy ? 'disabled' : ''} aria-label="Cancella il ronzio a ${fmt(r.p.f, 2)} Hz"><span class="f num">${fmt(r.p.f, 2)}</span><span class="p tab">+${fmt(r.p.prom, 0)} dB sopra il fondo</span></label>`).join('');
+  box.querySelectorAll('input').forEach(inp => inp.addEventListener('change', async () => {
+    const p = st.peaks[+inp.dataset.i];
+    const ch = st.channels.find(c => Math.abs(c.freq - p.f) < MIN_SPACING);
+    if (inp.checked && !ch) { await ensureAudio(); if (addChannel(p.f)) st.message = 'Ronzio a ' + fmt(p.f, 2) + ' Hz aggiunto: premi “Ricalibra tutti” o “Trova e cancella”.'; }
+    else if (!inp.checked && ch) { removeChannel(ch); st.message = 'Ronzio a ' + fmt(p.f, 2) + ' Hz tolto.'; }
+    render();
+  }));
+}
+
+const GUIDE_STEPS = [
+  ['Ascolto lo spettro', 'Cerco i picchi che spiccano sul fondo'],
+  ['Aggancio le frequenze', 'Misuro la frequenza esatta di ogni ronzio'],
+  ['Calibro la cassa', 'Un breve tono di prova per ogni ronzio'],
+  ['Cancello', 'Passi grandi, poi sempre più piccoli']
+];
+function renderSteps() {
+  const box = $('steps');
+  const n = st.guideText ? (st.guideStep || 1) : 0;
+  box.hidden = !n;
+  if (!n) { box.dataset.h = ''; return; }
+  const detail = st.guideText.replace(/…$/, '');
+  const h = n + '|' + detail;
+  if (box.dataset.h === h) return;
+  box.dataset.h = h;
+  box.innerHTML = GUIDE_STEPS.map(([t, s], i) => {
+    const k = i + 1, cls = k < n ? 'done' : k === n ? 'now' : '';
+    return `<li class="${cls}"${k === n ? ' aria-current="step"' : ''}><span class="bar"></span><span class="t"><span class="tab">${k}</span><span>${t}</span></span><span class="s">${k === n ? esc(detail) : s}</span></li>`;
+  }).join('');
+}
+
+function headline() {
+  const act = st.channels.filter(c => c.enabled && c.S);
+  const locked = act.filter(c => c.state === 'locked').length;
+  const allStable = st.autoOn && act.length > 0 && locked === act.length;
+  if (allStable) {
+    if (!ui.stableSince) {
+      ui.stableSince = Date.now();
+      // il messaggio di avvio non vale più quando tutto è stabile
+      if (/^Cancellazione (avviata|automatica attiva)/.test(st.message || '')) st.message = '';
+    }
+  } else ui.stableSince = null;
+  if (st.guideText) {
+    const t = ['Mi preparo', 'Sto ascoltando lo spettro', 'Sto agganciando le frequenze esatte', 'Sto calibrando la cassa'][st.guideStep || 0];
+    return [t, 'Lascia il microfono dove appoggi la testa e resta in silenzio. Poi la cancellazione parte da sola.', allStable];
+  }
+  if (calSeq) return ['Calibrazione in corso', 'Resta in silenzio per qualche secondo: la cassa emette un breve tono di prova.', allStable];
+  const nR = act.length === 1 ? 'Un ronzio' : act.length + ' ronzi';
+  if (allStable) {
+    const min = Math.floor((Date.now() - ui.stableSince) / 60000);
+    const t = min < 1 ? 'Silenzio da meno di un minuto' : min < 90 ? 'Silenzio da ' + min + (min === 1 ? ' minuto' : ' minuti') : 'Silenzio da ' + fmt(min / 60, 1) + ' ore';
+    return [t, nR + (act.length === 1 ? ' cancellato' : ' cancellati') + ' dove appoggi la testa.', allStable];
+  }
+  if (st.autoOn) {
+    return ['In regolazione', (locked ? locked + ' di ' + act.length + ' toni stabili. ' : '') + 'Si stabilizza in poche decine di secondi.', allStable];
+  }
+  if (st.outputOn && act.length) return ['Toni accesi a mano', 'La cancellazione automatica è spenta: i toni restano come li hai regolati.', allStable];
+  if (act.length) return ['Cancellazione ferma', 'I ronzi sono già calibrati: premi “Trova e cancella” per ripartire da capo, o riaccendi la cancellazione automatica nelle regolazioni avanzate.', allStable];
+  return ['Pronto a cercare i ronzi', 'Metti il microfono dove appoggi la testa e premi “Trova e cancella”.', allStable];
+}
+
+function micText() {
+  const act = st.channels.filter(c => c.enabled && c.S);
+  const allLocked = act.length && act.every(c => c.state === 'locked');
+  if (st.micPaused) return ['Microfono spento, ' + (st.nextCheck ? 'ricontrollo tra ' + fmtDur(Math.max(0, st.nextCheck - nowS())) : 'nessun ricontrollo programmato'), false];
+  if (st.micWaiting) return ['In attesa del microfono scollegato', false];
+  if (!st.micOn) return ['Microfono spento', false];
+  if (st.autoOn && st.holdMode === 'always') return ['Microfono acceso, corregge di continuo', true];
+  if (st.autoOn && st.holdMode === 'periodic' && !allLocked) return ['Microfono acceso finché tutti i toni sono stabili', true];
+  return ['Microfono acceso', true];
 }
 
 function render() {
   const busy = !!st.guideText || !!calSeq;
+  const [h, sub, allStable] = headline();
+  setText($('headline'), h);
+  setText($('sub'), sub);
+  const running = st.autoOn && st.outputOn;
+  $('nightBtn').hidden = !running;
+  $('guideBtn').className = running ? 'sec' : 'pri';
   $('guideBtn').disabled = busy;
-  $('guideBtn').textContent = st.guideText ? 'In corso…' : 'Trova e cancella';
-  const locked = st.channels.filter(c => c.enabled && c.state === 'locked').length;
-  const act = st.channels.filter(c => c.enabled && c.S).length;
-  let status = '';
-  if (st.guideText) status = '<b>' + st.guideText + '</b>';
-  else if (calSeq) status = '<b>Calibrazione in corso…</b> resta in silenzio.';
-  else if (st.autoOn) status = locked === act && act ? '<b>Stabile</b> su ' + act + (act > 1 ? ' toni' : ' tono') + '.' : '<b>In regolazione</b>: ' + locked + ' di ' + act + ' stabili.';
-  else status = 'Metti il microfono dove appoggi la testa e premi il pulsante.';
-  $('status').innerHTML = status;
+  setText($('guideBtn'), st.guideText ? 'In corso…' : running || st.channels.some(c => c.S) ? 'Trova e cancella di nuovo' : 'Trova e cancella');
+  $('stopBtn').hidden = !st.outputOn;
+  $('stopBtn').disabled = busy;
+  renderSteps();
 
-  $('sAuto').textContent = st.autoOn ? (locked === act && act ? 'stabile' : 'in regolazione') : (st.outputOn ? 'manuale' : 'spenta');
-  $('sMic').textContent = st.micOn ? 'acceso' : st.micPaused ? 'in pausa' : st.micWaiting ? 'in attesa' : 'spento';
-  $('sTones').textContent = String(st.channels.filter(c => c.enabled).length);
-  $('sNext').textContent = st.nextCheck ? 'tra ' + fmtDur(Math.max(0, st.nextCheck - nowS())) : '—';
+  const [mt, mon] = micText();
+  setText($('micStatus'), mt);
+  $('micLed').className = 'led' + (mon ? ' on' : '');
 
-  $('msg').textContent = st.message || 'Premi “Trova e cancella”: ascolta, trova i ronzi e li cancella.';
+  setText($('msg'), st.message || '');
+  $('msg').hidden = !st.message || !!st.guideText;   // durante la procedura parla il titolo
   renderTones();
+  $('calAllBtn').hidden = !st.channels.length;
   $('calAllBtn').disabled = busy || !st.channels.some(c => c.enabled);
   $('addToneBtn').disabled = busy || st.channels.length >= MAX_CH;
   $('autoSw').checked = st.autoOn;
@@ -1319,18 +1565,7 @@ function render() {
   $('outSw').checked = st.outputOn;
   $('outSw').disabled = busy;
   $('scanBtn').disabled = busy;
-
-  const chips = $('peaks');
-  if (st.peaks.length) {
-    const h = st.peaks.map((p, i) => {
-      const used = st.channels.some(ch => Math.abs(ch.freq - p.f) < MIN_SPACING);
-      return `<button class="chip${used ? ' used' : ''}" data-i="${i}" ${used ? 'disabled' : ''}><b>${fmt(p.f, 2)} Hz</b> · +${fmt(p.prom, 0)} dB ${used ? '✓' : '＋'}</button>`;
-    }).join('');
-    if (chips.dataset.h !== h) {
-      chips.innerHTML = h; chips.dataset.h = h;
-      chips.querySelectorAll('button').forEach(b => b.addEventListener('click', () => { addChannel(st.peaks[+b.dataset.i].f); render(); }));
-    }
-  }
+  renderPeaks();
 
   fillSelect($('micSel'), st.inputs, st.micId, SIM ? 'Microfono simulato' : 'Predefinito di sistema', 'Microfono');
   $('micSw').checked = st.micOn;
@@ -1338,15 +1573,27 @@ function render() {
   $('outNote').hidden = st.canSink || !st.ready || SIM;
   if (st.canSink) fillSelect($('outSel'), st.outputs, st.outId, 'Predefinito di sistema', 'Altoparlante');
 
-  $('holdSel').value = st.holdMode;
+  document.querySelectorAll('input[name=hold]').forEach(r => { r.checked = r.value === st.holdMode; });
   $('recheckSel').value = st.recheck;
-  $('recheckSel').disabled = st.holdMode !== 'periodic';
-  $('reactIn').value = st.react; $('reactVal').textContent = st.react < 25 ? 'calma' : st.react < 60 ? 'media' : 'rapida';
-  $('maxIn').value = db(st.maxAmp); $('maxVal').textContent = fmt(db(st.maxAmp)) + ' dBFS';
-  $('testIn').value = st.testDb; $('testVal').textContent = fmt(st.testDb, 0) + ' dBFS';
-  $('promIn').value = st.minProm; $('promVal').textContent = '+' + st.minProm + ' dB';
+  $('recheckRow').hidden = st.holdMode !== 'periodic';
+  $('reactIn').value = st.react; setText($('reactVal'), st.react < 25 ? 'calma' : st.react < 60 ? 'media' : 'rapida');
+  $('maxIn').value = db(st.maxAmp); setText($('maxVal'), sdb(db(st.maxAmp), 1) + 'FS');
+  $('testIn').value = st.testDb; setText($('testVal'), sdb(st.testDb, 0) + 'FS');
+  $('promIn').value = st.minProm; setText($('promVal'), st.minProm + ' dB');
+
+  if (ui.night) renderNight(allStable);
 }
 
+function fillSelect(sel, list, cur, defLabel, kindName) {
+  const html = [`<option value="">${defLabel}</option>`].concat(list.map((d, i) =>
+    `<option value="${d.deviceId}">${esc(d.label || kindName + ' ' + (i + 1))}</option>`));
+  if (cur && !list.some(d => d.deviceId === cur)) html.push(`<option value="${cur}">${esc((kindName === 'Microfono' ? st.micLabel : st.outLabel) || 'scelto')} (scollegato)</option>`);
+  const s = html.join('');
+  if (sel.dataset.h !== s) { sel.innerHTML = s; sel.dataset.h = s; }
+  if (document.activeElement !== sel) sel.value = cur || '';
+}
+
+// ================= spettro =================
 function drawSpectrum() {
   const cv = $('spec');
   const dpr = window.devicePixelRatio || 1;
@@ -1356,43 +1603,97 @@ function drawSpectrum() {
   const g = cv.getContext('2d');
   g.setTransform(dpr, 0, 0, dpr, 0, 0);
   g.clearRect(0, 0, w, h);
-  const css = getComputedStyle(document.documentElement);
-  const muted = css.getPropertyValue('--muted'), line = css.getPropertyValue('--line'), accent = css.getPropertyValue('--accent');
-  const fMin = 20, fMax = 500;
-  const X = (f) => (Math.log(f / fMin) / Math.log(fMax / fMin)) * w;
-  g.font = '10px ui-monospace, Menlo, monospace';
-  g.strokeStyle = line; g.fillStyle = muted; g.lineWidth = 1;
-  for (const f of [20, 30, 50, 64, 100, 150, 200, 300, 500]) {
-    const x = X(f); g.beginPath(); g.moveTo(x, 0); g.lineTo(x, h - 12); g.stroke();
-    g.fillText(String(f), Math.min(x + 2, w - 20), h - 2);
+  const C = { carta: '#E6E1D3', fumo: '#9A9DB0', ronzio: '#E8964A', riga: '#2E3348' };
+  const fMin = 20, fMax = 500, padX = 10, axisH = 22;
+  const X = (f) => padX + (Math.log(f / fMin) / Math.log(fMax / fMin)) * (w - 2 * padX);
+  g.font = '12px Recursive, system-ui, sans-serif';
+  g.textBaseline = 'alphabetic';
+  g.lineWidth = 1;
+  for (const f of [20, 50, 100, 200, 500]) {
+    const x = X(f);
+    g.strokeStyle = C.riga; g.beginPath(); g.moveTo(x, 8); g.lineTo(x, h - axisH); g.stroke();
+    g.fillStyle = C.fumo; g.textAlign = f === 20 ? 'left' : f === 500 ? 'right' : 'center';
+    g.fillText(f + ' Hz', f === 20 ? padX : f === 500 ? w - padX : x, h - 6);
   }
-  if (!st.spec || !st.micOn) {
-    g.fillStyle = muted; g.font = '12px -apple-system, system-ui, sans-serif';
-    g.fillText(st.micPaused ? 'Microfono in pausa (tutto stabile)' : 'Accendi il microfono per vedere lo spettro', 10, h / 2);
+  const live = st.spec && st.micOn;
+  const before = st.specBefore && st.specBefore.length ? st.specBefore : null;
+  $('legend').hidden = !(live && before);
+  if (!live) {
+    g.fillStyle = C.fumo; g.textAlign = 'center'; g.font = '14px Recursive, system-ui, sans-serif';
+    g.fillText(st.micPaused ? 'Microfono in pausa: tutto stabile' : 'Accendi il microfono per vedere lo spettro', w / 2, (h - axisH) / 2 + 5);
     return;
   }
   const hz = st.specHz, k0 = Math.ceil(fMin / hz), k1 = Math.min(st.spec.length - 1, Math.floor(fMax / hz));
   let hi = -200, lo = 0;
   for (let k = k0; k <= k1; k++) { hi = Math.max(hi, st.spec[k]); lo = Math.min(lo, st.spec[k]); }
+  if (before) for (let k = k0; k <= Math.min(k1, before.length - 1); k++) if (isFinite(before[k])) hi = Math.max(hi, before[k]);
   hi += 3; lo = Math.max(lo, hi - 80);
-  const Y = (v) => (h - 14) * (1 - (v - lo) / (hi - lo));
+  const Y = (v) => 8 + (h - axisH - 12) * (1 - (v - lo) / (hi - lo));
+  // toni attivi: linea sottile color ronzio
   for (const ch of st.channels) {
     if (!ch.enabled) continue;
     const x = X(ch.freq);
-    g.strokeStyle = ch.color; g.globalAlpha = 0.5; g.lineWidth = 2;
-    g.beginPath(); g.moveTo(x, 0); g.lineTo(x, h - 12); g.stroke(); g.globalAlpha = 1;
+    g.strokeStyle = C.ronzio; g.globalAlpha = 0.35; g.lineWidth = 1.5;
+    g.beginPath(); g.moveTo(x, 8); g.lineTo(x, h - axisH); g.stroke(); g.globalAlpha = 1;
   }
-  g.strokeStyle = accent; g.lineWidth = 1.3; g.beginPath();
-  for (let k = k0; k <= k1; k++) { const x = X(k * hz), y = Y(st.spec[k]); if (k === k0) g.moveTo(x, y); else g.lineTo(x, y); }
-  g.stroke();
-  g.fillStyle = css.getPropertyValue('--warn');
+  const line = (arr, color, width, dash) => {
+    g.strokeStyle = color; g.lineWidth = width; g.setLineDash(dash); g.beginPath();
+    let first = true;
+    for (let k = k0; k <= Math.min(k1, arr.length - 1); k++) {
+      const v = isFinite(arr[k]) ? arr[k] : lo;
+      const x = X(k * hz), y = clamp(Y(v), 8, h - axisH);
+      if (first) { g.moveTo(x, y); first = false; } else g.lineTo(x, y);
+    }
+    g.stroke(); g.setLineDash([]);
+  };
+  if (before) line(before, C.ronzio, 1.5, [4, 3]);
+  line(st.spec, C.carta, 1.6, []);
   for (const p of st.peaks) {
-    const x = X(p.f), y = Y(p.level);
-    g.beginPath(); g.arc(x, Math.max(y, 6), 3.5, 0, 2 * Math.PI); g.fill();
-    g.fillText(fmt(p.f, 1), Math.min(x + 5, w - 36), Math.max(y, 12));
+    const sel = st.channels.some(c => Math.abs(c.freq - p.f) < MIN_SPACING);
+    const x = X(p.f), y = clamp(Y(p.level), 12, h - axisH);
+    g.beginPath(); g.arc(x, y, 4, 0, 2 * Math.PI);
+    if (sel) { g.fillStyle = C.ronzio; g.fill(); } else { g.strokeStyle = C.fumo; g.lineWidth = 1.5; g.stroke(); }
   }
-  g.fillStyle = muted;
-  g.fillText(fmt(hi, 0) + ' dB', 4, 10);
+}
+
+// ================= modalità notte =================
+function residualPath(amp) {
+  let d = '';
+  const n = 600, w = 1136, mid = 40;
+  for (let i = 0; i <= n; i++) {
+    const t = i / n, th = t * 2 * Math.PI * 22;
+    const env = 0.35 + 0.65 * Math.pow(Math.sin(Math.PI * t), 2);
+    const y = mid - amp * env * (3.2 * Math.sin(th) + 1.6 * Math.sin(th * 0.64 + 1.2) + 0.8 * Math.sin(th * 1.9));
+    d += (i ? 'L' : 'M') + (t * w).toFixed(1) + ' ' + y.toFixed(1);
+  }
+  return d;
+}
+function renderNight(allStable) {
+  const act = st.channels.filter(c => c.enabled && c.S);
+  const reds = act.map(c => toneReduction(c)).filter(Boolean).map(r => r.v);
+  setText($('nightTitle'), allStable ? 'Silenzio' : st.autoOn ? 'In regolazione' : 'Cancellazione ferma');
+  const [mt, mon] = micText();
+  setText($('nightMic'), mt);
+  $('nightLed').className = 'led' + (mon ? ' on' : '');
+  const nR = act.length === 1 ? 'Un ronzio cancellato.' : act.length + ' ronzi cancellati.';
+  setText($('nightSub'), !st.autoOn ? 'Nessun tono in uscita. Esci dalla modalità notte per ripartire.'
+    : allStable ? nR + (st.holdMode === 'periodic' ? ' Se cambiano, il ricontrollo se ne accorge e corregge da solo.' : ' Il microfono resta acceso e corregge di continuo.')
+    : 'Sto ancora cercando la controfase. Si stabilizza in poche decine di secondi.');
+  const amp = reds.length ? clamp(Math.pow(10, -Math.min(...reds) / 20) * 8, 0.5, 4) : (st.autoOn ? 3 : 0.4);
+  const key = amp.toFixed(1);
+  const path = $('nightLine');
+  if (path.dataset.k !== key) { path.dataset.k = key; path.setAttribute('d', residualPath(amp)); }
+  const html = act.map(c => { const r = toneReduction(c); return `<span><span class="f num">${fmt(c.freq, c.freq < 100 ? 2 : 3)} Hz</span><span class="r tab">${r ? sdb(-r.v) : '—'}</span></span>`; }).join('');
+  if ($('nightTones').dataset.h !== html) { $('nightTones').innerHTML = html; $('nightTones').dataset.h = html; }
+  const d = new Date();
+  setText($('nightClock'), d.getHours().toString().padStart(2, '0') + ':' + d.getMinutes().toString().padStart(2, '0'));
+}
+let nightFocus = null;
+function setNight(on) {
+  ui.night = on;
+  $('night').hidden = !on;
+  if (on) { nightFocus = document.activeElement; render(); $('nightExit').focus(); }
+  else if (nightFocus && nightFocus.focus) nightFocus.focus();
 }
 
 function wireUI() {
@@ -1405,8 +1706,14 @@ function wireUI() {
     render();
   });
   $('guideBtn').addEventListener('click', () => guided());
+  $('nightBtn').addEventListener('click', () => setNight(true));
+  $('nightExit').addEventListener('click', () => setNight(false));
+  const stopAll = () => { setAuto(false); setOutput(false); st.message = 'Cancellazione ferma: i toni sono spenti.'; render(); };
+  $('stopBtn').addEventListener('click', stopAll);
+  $('nightStop').addEventListener('click', () => { stopAll(); setNight(false); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && ui.night) setNight(false); });
   $('scanBtn').addEventListener('click', () => scanAndShow());
-  $('addToneBtn').addEventListener('click', async () => { await ensureAudio(); const ch = addChannel(st.channels.length ? Math.min(st.channels[st.channels.length - 1].freq + 20, 480) : 100); if (ch) st.message = 'Tono aggiunto: imposta la frequenza e premi Calibra.'; render(); });
+  $('addToneBtn').addEventListener('click', async () => { await ensureAudio(); const ch = addChannel(st.channels.length ? Math.min(st.channels[st.channels.length - 1].freq + 20, 480) : 100); if (ch) st.message = 'Tono aggiunto: scrivi la frequenza e premi Ricalibra in “Dettagli e regolazione”.'; render(); });
   $('calAllBtn').addEventListener('click', async () => {
     await ensureAudio();
     if (!st.micOn && !(await openMic())) { render(); return; }
@@ -1434,7 +1741,7 @@ function wireUI() {
         setAuto(false);
         const hs = st.channels.filter(c => c.enabled && c.S && c.holdSec).map(c => c.holdSec);
         st.message = 'Microfono spento: i toni continuano con frequenza e fase previste dalla storia recente (modalità manuale).'
-          + (hs.length ? ' Dalla deriva misurata la cancellazione regge ~' + fmtDur(Math.min(...hs)) + '.' : '');
+          + (hs.length ? ' Dalla deriva misurata la cancellazione regge circa ' + fmtDur(Math.min(...hs)) + '.' : '');
       }
     }
     render();
@@ -1461,24 +1768,31 @@ function wireUI() {
     st.message = 'Altoparlante impostato: ' + (st.outLabel || 'predefinito di sistema') + '. Ricalibra i toni.';
     render();
   });
-  $('holdSel').addEventListener('change', (e) => { st.holdMode = e.target.value; if (st.holdMode === 'always' && st.micPaused) { clearRecheck(); st.micPaused = false; openMic(); } save(); render(); });
+  document.querySelectorAll('input[name=hold]').forEach(r => r.addEventListener('change', () => {
+    if (!r.checked) return;
+    st.holdMode = r.value;
+    if (st.holdMode === 'always' && st.micPaused) { clearRecheck(); st.micPaused = false; openMic(); }
+    save(); render();
+  }));
   $('recheckSel').addEventListener('change', (e) => { st.recheck = e.target.value; save(); render(); });
   $('reactIn').addEventListener('input', (e) => { st.react = +e.target.value; save(); render(); });
   $('maxIn').addEventListener('input', (e) => { st.maxAmp = undb(+e.target.value); save(); render(); });
   $('testIn').addEventListener('input', (e) => { st.testDb = +e.target.value; save(); render(); });
   $('promIn').addEventListener('input', (e) => { st.minProm = +e.target.value; save(); render(); });
   window.addEventListener('resize', () => { drawSpectrum(); });
-  setInterval(() => { if (st.nextCheck) scheduleRender(); }, 1000);
+  // aggiorna orologi e conteggi (ricontrollo, "silenzio da", ora in modalità notte)
+  setInterval(() => { if (st.nextCheck || ui.stableSince || ui.night) scheduleRender(); }, 1000);
 }
 
 load();
 wireUI();
 if (SIM) $('simTag').hidden = false;
 render();
+drawSpectrum();
 
 // accesso per i test automatici
 window.__controfase = { st, simLog, sr: () => ctx && ctx.sampleRate, guided, setAuto, setOutput, openMic, closeMic, calibrate, addChannel, scan,
-  simPump: (i, on) => node && node.port.postMessage({ type: 'simPump', index: i, on }) };
+  setNight, render, simPump: (i, on) => node && node.port.postMessage({ type: 'simPump', index: i, on }) };
 </script>
 </body>
 </html>
