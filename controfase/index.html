@@ -1236,7 +1236,7 @@ async function guided() {
     setOutput(false);
     await waitBlocks(3);
 
-    st.guideStep = 1; st.guideText = 'Ascolto lo spettro (8 s)…'; render();
+    st.guideStep = 1; st.guideText = 'Cerco i picchi che spiccano sul fondo (8 s)…'; render();
     const peaks = await scan(8);
     const fresh = peaks.filter(p => !st.channels.some(ch => Math.abs(ch.freq - p.f) < MIN_SPACING));
     for (const p of fresh.slice(0, Math.max(0, 3 - st.channels.filter(c => c.enabled).length))) addChannel(p.f);
@@ -1247,7 +1247,7 @@ async function guided() {
     chs.forEach(ch => { ch.phref = null; ch.fint = ch.freq; ch.calFreq = ch.freq; ch.S = null; ch.state = 'new'; });
     await waitBlocks(48);
 
-    st.guideStep = 3; st.guideText = 'Calibro la cassa: tono di prova e misura al microfono (8 s)…'; render();
+    st.guideStep = 3; st.guideText = 'Un breve tono di prova per ogni ronzio (8 s)…'; render();
     await calibrate(chs);
     if (!chs.some(ch => ch.S)) { st.message = 'Calibrazione non riuscita: alza il “livello tono di prova” o il volume e riprova.'; return; }
 
@@ -1482,7 +1482,7 @@ const GUIDE_STEPS = [
 ];
 function renderSteps() {
   const box = $('steps');
-  const n = st.guideText ? (st.guideStep || 1) : 0;
+  const n = st.guideText && st.guideStep != null ? Math.max(1, st.guideStep) : 0;   // solo nella procedura guidata
   box.hidden = !n;
   if (!n) { box.dataset.h = ''; return; }
   const detail = st.guideText.replace(/…$/, '');
@@ -1506,6 +1506,7 @@ function headline() {
       if (/^Cancellazione (avviata|automatica attiva)/.test(st.message || '')) st.message = '';
     }
   } else ui.stableSince = null;
+  if (st.guideText && st.guideStep == null) return [st.guideText.replace(/ \(\d+ s\)…$|…$/, ''), 'Resta in silenzio per qualche secondo.', allStable];
   if (st.guideText) {
     const t = ['Mi preparo', 'Sto ascoltando lo spettro', 'Sto agganciando le frequenze esatte', 'Sto calibrando la cassa'][st.guideStep || 0];
     return [t, 'Lascia il microfono dove appoggi la testa e resta in silenzio. Poi la cancellazione parte da sola.', allStable];
