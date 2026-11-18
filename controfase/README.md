@@ -15,13 +15,9 @@ Microfono dove appoggi la testa, poi **Trova e cancella**:
 1. ascolta lo spettro 20–500 Hz e trova i picchi che spiccano sul fondo;
 2. aggancia la frequenza esatta di ognuno (fino a 3 automaticamente, 6 a mano);
 3. calibra il percorso altoparlante → microfono per ogni tono;
-4. avvia la cancellazione: passi grandi all'inizio, sempre più piccoli, poi **si ferma**.
+4. avvia la cancellazione: passi grandi all'inizio, sempre più piccoli fino allo stato **stabile**, dove continua a correggere lentamente le derive lente.
 
-Quando tutti i toni sono stabili, se scegli “spegni il microfono e ricontrolla”, il
-microfono si chiude e si riapre ogni tanto (intervallo automatico dalla tenuta misurata,
-o fisso) per verificare e correggere. Con l'intervallo automatico, se la sorgente cambia
-frequenza troppo in fretta (tenuta sotto 30 s, tipico dei ronzi legati alla rete a 50/100 Hz)
-il microfono **resta acceso** e l'app lo dice.
+Di default il microfono resta acceso per inseguire di continuo le derive. Se scegli “spegni il microfono e ricontrolla”, quando tutti i toni sono stabili il microfono si chiude e si riapre ogni tanto (intervallo automatico dalla tenuta misurata, o fisso) per verificare e correggere. Con l'intervallo automatico, se la sorgente cambia frequenza troppo in fretta (tenuta sotto 30 s, tipico dei ronzi legati alla rete a 50/100 Hz) il microfono **resta acceso** e l'app lo dice.
 
 Quando la cancellazione è partita, **Modalità notte** lascia sullo schermo solo lo stato
 (“Silenzio”, il residuo, il prossimo ricontrollo) su un fondo quasi nero; Esc o “Esci dalla
@@ -42,20 +38,20 @@ clock campione per campione.
   ronzio rispetto al nostro oscillatore anche se la sorgente deriva; guadagni adattati al
   rapporto segnale/rumore.
 - **Controllo**: `W ← W − K·M/S` con K che parte da 0,3 e si riduce del 5% a ogni blocco
-  finché il residuo migliora; riparte a 0,3 solo se il residuo sale di oltre 6 dB rispetto
-  al minimo (o sopra −30 dB rispetto al ronzio originale). Quando K è al minimo e il residuo
-  è fermo, il tono si **blocca** (stato “stabile”).
+  finché il residuo migliora; riparte a 0,3 se il residuo sale di oltre 4 dB rispetto
+  al minimo (o sopra −30 dB rispetto al ronzio originale). Quando K scende a 0,02 e il residuo
+  è fermo, il tono entra in stato “stabile”, mantenendo un inseguimento lento continuo
+  (K ≈ 0,008–0,022 modulato dal rapporto segnale/rumore).
 - **Percorso S**: misurato in calibrazione (spento / tono di prova / spento, con
-  compensazione della rotazione) e corretto in linea dal guadagno osservato del ciclo,
-  entro ±60° e ±6 dB.
+  compensazione blocco-blocco della rotazione) e corretto in linea dal guadagno osservato del ciclo
+  ogni volta che il passo supera il rumore di fondo (ampiezza entro ±6 dB, fase libera per assorbire derive di clock).
 - **Storia di fase**: il worklet conta la fase assoluta di ogni oscillatore; sommata alla fase
-  del disturbo stimato dà la fase della sorgente blocco per blocco, anche attraverso le pause
-  del microfono.
+  del disturbo stimato dà la fase della sorgente blocco per blocco, separando i segmenti separati da pause.
 - **Tenuta senza microfono, misurata sui dati**: per vari anticipi τ si prevede la fase τ
-  secondi dopo con una retta sugli ultimi W secondi (W fra 2 e 60 s, scelto da solo: corto per
-  sorgenti che vagano, lungo per quelle stabili) e la si confronta con quella vera. La tenuta è
-  il τ in cui l'errore tipico arriva a 15° (≈ 11 dB di cancellazione residua); servono 60 s di
-  storia e non si estrapola oltre il doppio di quanto verificato.
+  secondi dopo con una retta sugli ultimi W secondi (W fra 2 e 60 s, scelta conservativa)
+  e la si confronta con quella vera. La tenuta è
+  il τ in cui l'errore tipico arriva a 15° (≈ 11 dB di cancellazione residua); servono 90 s di
+  storia continua e non si estrapola oltre 1,5× quanto verificato.
 - **Allo spegnimento del microfono** (automatico, manuale o per scollegamento) frequenza e fase
   dei toni vengono dalla stessa retta, non dal valore istantaneo dell'aggancio (che oscilla di
   qualche centesimo di Hz e faceva scivolare la fase in pochi secondi).
