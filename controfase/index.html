@@ -574,7 +574,7 @@ function newChannel(freq) {
     W: ZERO, calW: null, S: null, baseline: null, state: 'new',
     sigma2: null, level: null, lastM: null, lastB: null, history: [],
     Kprev: 0, Mprev: null, prevDh: null, adaptStart: 0, Weff: ZERO, WeffPrev: ZERO, phref: null, pllGrace: 0, acqOk: 0, recheckPending: false,
-    quietN2: null, lastN2: 0, noisy: false,
+    quietN2: null, lastN2: 0, prevBurst: false, noisy: false, noisyStreak: 0,
     Scal: null, Rs: null, best: null, stable: 0, resid: [], lockRef: null, lockedAt: null, divergeN: 0,
     track: [], holdSec: null, holdRaw: null, holdWin: 4, holdScale: 1, frozen: null, lastSlip: null, limitN: 0, snrDb: null, K: 0
   };
@@ -792,13 +792,18 @@ function onBlocks(d) {
     const pOk = clear(ch.freq + PROBE_HZ), mOk = clear(ch.freq - PROBE_HZ);
     const n2 = pOk && mOk ? (pp + mm) / 2 : pOk ? pp : mOk ? mm : Math.min(pp, mm);
     ch.lastN2 = n2;
-    // fondo di rumore quieto asimmetrico: scende svelto, sale lentissimo (ignora colpi di tastiera/voce)
+    // fondo di rumore quieto asimmetrico: scende svelto, sale lento (ignora colpi di tastiera/voce)
     if (ch.quietN2 == null) ch.quietN2 = n2;
-    else ch.quietN2 += (n2 < ch.quietN2 ? 0.08 : 0.006) * (n2 - ch.quietN2);
+    else ch.quietN2 += (n2 < ch.quietN2 ? 0.05 : 0.01) * (n2 - ch.quietN2);
     const qFloor = Math.max(ch.quietN2 || 0, 1e-16);
-    const burst = n2 > 3.5 * qFloor;
+    // χ²_4 delle sonde può toccare 3–4× per caso su un singolo blocco: scatta subito a 6,5× (+8 dB)
+    // oppure su 2 blocchi consecutivi > 3,5× (+5,4 dB) → zero falsi positivi nel silenzio
+    const softBurst = n2 > 3.5 * qFloor;
+    const burst = n2 > 6.5 * qFloor || (softBurst && ch.prevBurst);
+    ch.prevBurst = softBurst;
     const sRef = Math.max(ch.sigma2 || 0, qFloor);
-    ch.noisy = !calSeq && (burst || (M2 > 2 * sRef && M2 < 4 * Math.max(n2, 1e-16)));
+    ch.noisy = !calSeq && (burst || (M2 > 3 * sRef && M2 < 3.5 * Math.max(n2, 1e-16)));
+    ch.noisyStreak = ch.noisy ? (ch.noisyStreak || 0) + 1 : 0;
     if (!ch.noisy) {
       ch.sigma2 = ch.sigma2 == null ? n2 : ch.sigma2 + 0.08 * (n2 - ch.sigma2);
       const lvl = db(Math.sqrt(M2));
@@ -1372,7 +1377,7 @@ const ui = { stableSince: null, night: false };
 // stato del tono: testo e spia (ok = stabile, run = al lavoro, idle = fermo)
 function toneState(ch) {
   if (!ch.enabled) return ['Disattivato', 'idle'];
-  if (ch.noisy && (ch.state === 'locked' || ch.state === 'adapting')) return ['In pausa su rumore esterno', 'ok'];
+  if (ch.noisyStreak >= 2 && (ch.state === 'locked' || ch.state === 'adapting')) return ['In pausa su rumore esterno', 'ok'];
   switch (ch.state) {
     case 'new': return ['Da calibrare', 'idle'];
     case 'calibrating': return ['Calibrazione in corso', 'run'];
