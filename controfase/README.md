@@ -10,12 +10,12 @@ Con Chrome si può fissare anche l'altoparlante.)
 
 ## Uso
 
-Microfono dove appoggi la testa, poi **Trova e cancella**:
+Microfono dove appoggi la testa, poi:
 
-1. ascolta lo spettro 20–500 Hz e trova i picchi che spiccano sul fondo;
-2. aggancia la frequenza esatta di ognuno (fino a 3 automaticamente, 6 a mano);
-3. calibra il percorso altoparlante → microfono per ogni tono;
-4. avvia la cancellazione: passi grandi all'inizio, sempre più piccoli fino allo stato **stabile**, dove continua a correggere lentamente le derive lente.
+1. premi **Cerca i toni**: ascolta lo spettro 20–500 Hz e mostra tutti i picchi trovati senza avviare nulla da sola;
+2. spunta nello spettro solo i toni che vuoi cancellare (oppure aggiungili a mano) e premi **Calibra e cancella**;
+3. l'app aggancia la frequenza esatta dei soli toni scelti (fino a 6), calibra il percorso altoparlante → microfono e avvia la cancellazione;
+4. passi grandi all'inizio, sempre più piccoli fino allo stato **stabile**, dove continua a correggere lentamente le derive lente (ignorando i rumori a banda larga come tastiera o voce tramite le sonde a ±8 Hz).
 
 Di default il microfono resta acceso per inseguire di continuo le derive. Se scegli “spegni il microfono e ricontrolla”, quando tutti i toni sono stabili il microfono si chiude e si riapre ogni tanto (intervallo automatico dalla tenuta misurata, o fisso) per verificare e correggere. Con l'intervallo automatico, se la sorgente cambia frequenza troppo in fretta (tenuta sotto 30 s, tipico dei ronzi legati alla rete a 50/100 Hz) il microfono **resta acceso** e l'app lo dice.
 

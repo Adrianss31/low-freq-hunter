@@ -228,7 +228,8 @@
       </div>
       <div class="actions">
         <button class="pri" id="nightBtn" hidden>Modalità notte</button>
-        <button class="pri" id="guideBtn">Trova e cancella</button>
+        <button class="pri" id="guideBtn">Cerca i toni</button>
+        <button class="sec" id="scanTopBtn" hidden>Cerca toni</button>
         <button class="quiet" id="stopBtn" hidden>Ferma la cancellazione</button>
       </div>
       <ol class="steps" id="steps" aria-label="Passi della procedura" hidden></ol>
@@ -245,10 +246,10 @@
       <details class="help">
         <summary><svg class="chev" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6 L15 12 L9 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Come funziona</summary>
         <ol>
-          <li>Metti il microfono dove appoggi la testa e premi <b>Trova e cancella</b>: ascolta lo spettro, trova i ronzi, ne misura la frequenza esatta, calibra la cassa e avvia la cancellazione.</li>
-          <li>Il controllo fa passi grandi quando è lontano e sempre più piccoli vicino al minimo; quando il residuo smette di scendere si <b>ferma</b> (stato “stabile”). Un aggancio di fase continua a seguire le piccole derive di frequenza della sorgente.</li>
-          <li>Se scegli “Spegnilo e ricontrolla”, quando tutti i toni sono stabili il microfono si chiude e ogni tanto si riapre qualche secondo per verificare e correggere.</li>
-          <li>Se il ronzio cambia o ti sposti, l'app riaggancia da sola; se il livello sale, si ferma e ricalibra.</li>
+          <li>Metti il microfono dove appoggi la testa e premi <b>Cerca i toni</b>: ascolta lo spettro e mostra tutti i picchi trovati senza avviare nulla da sola.</li>
+          <li>Spunta nello spettro i ronzi che vuoi cancellare (oppure aggiungili a mano) e premi <b>Calibra e cancella</b>: aggancia la frequenza esatta dei soli toni scelti, calibra la cassa e avvia la cancellazione.</li>
+          <li>Il controllo converge rapidamente all'inizio e poi continua a correggere lentamente le derive di fase e ampiezza. I colpi a banda larga (es. scrittura sulla tastiera, voce) vengono riconosciuti tramite le sonde laterali e ignorati per non alterare la cancellazione.</li>
+          <li>Se scegli “Spegnilo e ricontrolla”, quando tutti i toni sono stabili il microfono si chiude e si riapre ogni tanto per verificare e correggere.</li>
         </ol>
         <ul>
           <li>La zona di silenzio è di circa 30–40 cm intorno al microfono; altrove il ronzio può aumentare.</li>
@@ -262,13 +263,13 @@
 
     <aside class="side">
       <section class="panel">
-        <div class="head"><h2>Spettro al cuscino</h2><button class="small" id="scanBtn">Rileva toni</button></div>
+        <div class="head"><h2>Spettro al cuscino</h2><button class="small" id="scanBtn">Cerca i toni</button></div>
         <canvas id="spec" role="img" aria-label="Spettro del microfono da 20 a 500 Hz"></canvas>
         <div class="legend" id="legend" hidden>
           <span><svg width="20" height="4" aria-hidden="true"><line x1="0" y1="2" x2="20" y2="2" stroke="#E8964A" stroke-width="2" stroke-dasharray="4 3"/></svg>Prima</span>
           <span><svg width="20" height="4" aria-hidden="true"><line x1="0" y1="2" x2="20" y2="2" stroke="#E6E1D3" stroke-width="2"/></svg>Adesso</span>
         </div>
-        <div class="peaks" id="peaks"><p class="muted" style="margin:0;font-size:14px">Premi “Rileva toni” per cercare i ronzi presenti fra 20 e 500 Hz.</p></div>
+        <div class="peaks" id="peaks"><p class="muted" style="margin:0;font-size:14px">Premi “Cerca i toni” per cercare i ronzi presenti fra 20 e 500 Hz e scegliere quali cancellare.</p></div>
       </section>
 
       <section class="panel">
@@ -561,8 +562,8 @@ function load() {
       st.channels.push(ch);
     }
     if (st.channels.length) st.message = sameSetup && st.channels.some(c => c.S)
-      ? 'Ho ripreso i toni e la calibrazione della volta scorsa. Accendi il microfono e attiva la cancellazione (o premi Trova e cancella per ripartire da zero).'
-      : 'Ho ripreso i toni della volta scorsa (da ricalibrare).';
+      ? 'Ho ripreso i toni e la calibrazione della volta scorsa. Premi «Avvia cancellazione» (o «Ricalibra tutti»).'
+      : 'Ho ripreso i toni della volta scorsa (da ricalibrare con «Calibra e cancella»).';
   } catch (e) { /* ignora */ }
 }
 
@@ -573,6 +574,7 @@ function newChannel(freq) {
     W: ZERO, calW: null, S: null, baseline: null, state: 'new',
     sigma2: null, level: null, lastM: null, lastB: null, history: [],
     Kprev: 0, Mprev: null, prevDh: null, adaptStart: 0, Weff: ZERO, WeffPrev: ZERO, phref: null, pllGrace: 0, acqOk: 0, recheckPending: false,
+    quietN2: null, lastN2: 0, noisy: false,
     Scal: null, Rs: null, best: null, stable: 0, resid: [], lockRef: null, lockedAt: null, divergeN: 0,
     track: [], holdSec: null, holdRaw: null, holdWin: 4, holdScale: 1, frozen: null, lastSlip: null, limitN: 0, snrDb: null, K: 0
   };
@@ -782,17 +784,28 @@ function onBlocks(d) {
     const ch = chById(b.id);
     if (!ch) continue;
     const M = cx(b.re, b.im);
+    const M2 = cmag2(M);
     // rumore dalle sonde a ±8 Hz, scartando quelle entro 7,5 Hz da un altro tono (lobo principale Hann 0,25 s)
     const others = st.channels.filter(c => c !== ch && c.enabled).map(c => c.freq);
     const clear = (f) => others.every(o => Math.abs(o - f) > 7.5);
     const pp = b.pr * b.pr + b.pi * b.pi, mm = b.mr * b.mr + b.mi * b.mi;
     const pOk = clear(ch.freq + PROBE_HZ), mOk = clear(ch.freq - PROBE_HZ);
     const n2 = pOk && mOk ? (pp + mm) / 2 : pOk ? pp : mOk ? mm : Math.min(pp, mm);
-    ch.sigma2 = ch.sigma2 == null ? n2 : ch.sigma2 + 0.08 * (n2 - ch.sigma2);
-    const lvl = db(cmag(M));
-    ch.level = ch.level == null ? lvl : ch.level + 0.3 * (lvl - ch.level);
-    ch.history.push(ch.level);
-    if (ch.history.length > 480) ch.history.splice(0, ch.history.length - 480);
+    ch.lastN2 = n2;
+    // fondo di rumore quieto asimmetrico: scende svelto, sale lentissimo (ignora colpi di tastiera/voce)
+    if (ch.quietN2 == null) ch.quietN2 = n2;
+    else ch.quietN2 += (n2 < ch.quietN2 ? 0.08 : 0.006) * (n2 - ch.quietN2);
+    const qFloor = Math.max(ch.quietN2 || 0, 1e-16);
+    const burst = n2 > 3.5 * qFloor;
+    const sRef = Math.max(ch.sigma2 || 0, qFloor);
+    ch.noisy = !calSeq && (burst || (M2 > 2 * sRef && M2 < 4 * Math.max(n2, 1e-16)));
+    if (!ch.noisy) {
+      ch.sigma2 = ch.sigma2 == null ? n2 : ch.sigma2 + 0.08 * (n2 - ch.sigma2);
+      const lvl = db(Math.sqrt(M2));
+      ch.level = ch.level == null ? lvl : ch.level + 0.3 * (lvl - ch.level);
+      ch.history.push(ch.level);
+      if (ch.history.length > 480) ch.history.splice(0, ch.history.length - 480);
+    }
     ch.lastM = M; ch.lastB = b;
     ch.WeffPrev = ch.Weff; ch.Weff = effW(ch);
   }
@@ -817,9 +830,10 @@ function step(ch, t) {
   else if (known) Dh = csub(M, cmul(ch.S, Weff));
 
   // --- PLL: tiene costante la fase del disturbo rispetto al nostro oscillatore ---
-  // (solo se il ronzio c'è davvero: se la sorgente si ferma, la frequenza resta dov'è)
+  // (solo se il ronzio emerge davvero sul rumore istantaneo: ignora colpi di tastiera/voce)
   const basePow0 = ch.baseline != null ? Math.pow(10, ch.baseline / 10) : 0;
-  if (Dh && cmag2(Dh) > Math.max(4 * s2, 0.01 * basePow0) && ch.enabled) {
+  const instN = Math.max(ch.lastN2 || 0, s2, 1e-16);
+  if (Dh && !ch.noisy && cmag2(Dh) > Math.max(4 * instN, 0.01 * basePow0) && ch.enabled) {
     if (ch.frozen) measureSlip(ch, Dh);
     trackPhase(ch, Dh);
     const snrDb = db2(cmag2(Dh) / s2);
@@ -851,6 +865,12 @@ function step(ch, t) {
 
   if (!st.autoOn || !known || !ch.enabled) { ch.Mprev = null; return; }
   if (ch.state !== 'adapting' && ch.state !== 'locked') return;
+  // blocco contaminato da rumore a banda larga (tastiera, voce, urti): congela adattamento e protezioni
+  if (ch.noisy) {
+    ch.Mprev = null; ch.Kprev = 0;
+    if (ch.divergeN > 0) ch.divergeN--;
+    return;
+  }
 
   const M2 = cmag2(M);
   ch.resid.push(M2);
@@ -1141,7 +1161,7 @@ function startAdapting(ch) {
 function setAuto(on) {
   if (on) {
     const ready = st.channels.filter(ch => ch.enabled && ch.S);
-    if (!ready.length) { st.autoOn = false; st.message = 'Prima serve almeno un tono calibrato (usa “Trova e cancella”).'; return false; }
+    if (!ready.length) { st.autoOn = false; st.message = 'Prima serve almeno un tono calibrato (usa «Calibra e cancella»).'; return false; }
     if (!st.micOn && !st.micPaused) { st.autoOn = false; st.message = 'Accendi il microfono.'; return false; }
     st.autoOn = true;
     ready.forEach(startAdapting);
@@ -1275,18 +1295,33 @@ function detectPeaks(sum, n) {
 }
 
 async function scanAndShow() {
+  if (st.guideText || calSeq) return;
   await ensureAudio();
+  if (st.micPaused) { clearRecheck(); st.micPaused = false; }
   if (!st.micOn && !(await openMic())) { render(); return; }
   st.guideText = 'Ascolto lo spettro (6 s)…'; render();
   await scan(6);
   st.guideText = null;
-  st.message = st.peaks.length ? 'Toni trovati: tocca quelli da cancellare.' : 'Nessun tono evidente. Prova ad abbassare la “sensibilità rilevamento”.';
+  st.message = st.peaks.length
+    ? 'Trovati ' + st.peaks.length + ' toni nello spettro: spunta solo quelli che vuoi cancellare, poi premi «Calibra e cancella».'
+    : 'Nessun tono evidente. Prova ad abbassare la “sensibilità rilevamento” o aggiungi un tono a mano.';
   render();
 }
 
-// ================= procedura guidata =================
-async function guided() {
+// ================= procedura guidata sui toni scelti =================
+async function startSelected() {
   if (st.guideText) return;
+  const sel = st.channels.filter(ch => ch.enabled);
+  if (!sel.length) { await scanAndShow(); return; }
+  // se tutti i toni scelti sono già calibrati e l'utente vuole solo riavviare
+  if (sel.every(ch => ch.S) && !st.autoOn) {
+    await ensureAudio();
+    if (st.micPaused) { clearRecheck(); st.micPaused = false; }
+    if (!st.micOn && !(await openMic())) { render(); return; }
+    setAuto(true);
+    render();
+    return;
+  }
   try {
     await ensureAudio();
     st.guideStep = 0; st.guideText = 'Preparo…'; render();
@@ -1296,18 +1331,14 @@ async function guided() {
     setOutput(false);
     await waitBlocks(3);
 
-    st.guideStep = 1; st.guideText = 'Cerco i picchi che spiccano sul fondo (8 s)…'; render();
-    const peaks = await scan(8);
-    const fresh = peaks.filter(p => !st.channels.some(ch => Math.abs(ch.freq - p.f) < MIN_SPACING));
-    for (const p of fresh.slice(0, Math.max(0, 3 - st.channels.filter(c => c.enabled).length))) addChannel(p.f);
     const chs = st.channels.filter(ch => ch.enabled);
-    if (!chs.length) { st.message = 'Non ho trovato ronzi evidenti. Abbassa la “sensibilità rilevamento” o aggiungi un tono a mano.'; return; }
+    if (!chs.length) { st.message = 'Seleziona almeno un tono dallo spettro o aggiungilo a mano.'; return; }
 
-    st.guideStep = 2; st.guideText = 'Misuro la frequenza esatta di ' + chs.map(c => fmt(c.freq, 1) + ' Hz').join(', ') + ' (12 s)…'; render();
+    st.guideStep = 1; st.guideText = 'Misuro la frequenza esatta di ' + chs.map(c => fmt(c.freq, 1) + ' Hz').join(', ') + ' (12 s)…'; render();
     chs.forEach(ch => { ch.phref = null; ch.prevDh = null; ch.acqOk = 0; ch.fint = ch.freq; ch.calFreq = ch.freq; ch.S = null; ch.state = 'new'; });
     await waitBlocks(48);
 
-    st.guideStep = 3; st.guideText = 'Un breve tono di prova per ogni ronzio (8 s)…'; render();
+    st.guideStep = 2; st.guideText = 'Un breve tono di prova per ogni ronzio (8 s)…'; render();
     await calibrate(chs);
     if (!chs.some(ch => ch.S)) { st.message = 'Calibrazione non riuscita: alza il “livello tono di prova” o il volume e riprova.'; return; }
 
@@ -1341,6 +1372,7 @@ const ui = { stableSince: null, night: false };
 // stato del tono: testo e spia (ok = stabile, run = al lavoro, idle = fermo)
 function toneState(ch) {
   if (!ch.enabled) return ['Disattivato', 'idle'];
+  if (ch.noisy && (ch.state === 'locked' || ch.state === 'adapting')) return ['In pausa su rumore esterno', 'ok'];
   switch (ch.state) {
     case 'new': return ['Da calibrare', 'idle'];
     case 'calibrating': return ['Calibrazione in corso', 'run'];
@@ -1462,7 +1494,7 @@ function renderTones() {
   box.querySelectorAll('.tone').forEach(el => { if (!ids.has(el.dataset.id)) el.remove(); });
   let empty = box.querySelector('.empty');
   if (!st.channels.length) {
-    if (!empty) { empty = document.createElement('div'); empty.className = 'empty'; empty.textContent = 'Nessun ronzio da cancellare. Premi “Trova e cancella”, oppure “Rileva toni” accanto allo spettro.'; box.appendChild(empty); }
+    if (!empty) { empty = document.createElement('div'); empty.className = 'empty'; empty.textContent = 'Nessun ronzio selezionato. Premi “Cerca i toni” e spunta dallo spettro solo quelli che vuoi cancellare.'; box.appendChild(empty); }
   } else if (empty) empty.remove();
   const busy = !!calSeq || !!st.guideText;
   for (const ch of st.channels) {
@@ -1524,19 +1556,18 @@ function renderPeaks() {
   const h = rows.map(r => r.p.f.toFixed(2) + (r.on ? '+' : '-')).join(',') + (busy ? 'b' : '');
   if (box.dataset.h === h) return;
   box.dataset.h = h;
-  box.innerHTML = rows.map(r => `<label class="peak${r.on ? ' sel' : ''}"><input type="checkbox" data-i="${r.i}" ${r.on ? 'checked' : ''} ${busy ? 'disabled' : ''} aria-label="Cancella il ronzio a ${fmt(r.p.f, 2)} Hz"><span class="f num">${fmt(r.p.f, 2)}</span><span class="p tab">+${fmt(r.p.prom, 0)} dB sopra il fondo</span></label>`).join('');
+  box.innerHTML = rows.map(r => `<label class="peak${r.on ? ' sel' : ''}"><input type="checkbox" data-i="${r.i}" ${r.on ? 'checked' : ''} ${busy ? 'disabled' : ''} aria-label="Cancella il ronzio a ${fmt(r.p.f, 2)} Hz"><span class="f num">${fmt(r.p.f, 2)}</span><span class="p tab">+${fmt(r.p.prom, 0)} dB sopra il fondo${r.p.f < 80 ? ' · bassa freq.' : ''}</span></label>`).join('');
   box.querySelectorAll('input').forEach(inp => inp.addEventListener('change', async () => {
     const p = st.peaks[+inp.dataset.i];
     const ch = st.channels.find(c => Math.abs(c.freq - p.f) < MIN_SPACING);
-    if (inp.checked && !ch) { await ensureAudio(); if (addChannel(p.f)) st.message = 'Ronzio a ' + fmt(p.f, 2) + ' Hz aggiunto: premi “Ricalibra tutti” o “Trova e cancella”.'; }
+    if (inp.checked && !ch) { await ensureAudio(); if (addChannel(p.f)) st.message = 'Ronzio a ' + fmt(p.f, 2) + ' Hz aggiunto: spunta gli altri che vuoi o premi «Calibra e cancella».'; }
     else if (!inp.checked && ch) { removeChannel(ch); st.message = 'Ronzio a ' + fmt(p.f, 2) + ' Hz tolto.'; }
     render();
   }));
 }
 
 const GUIDE_STEPS = [
-  ['Ascolto lo spettro', 'Cerco i picchi che spiccano sul fondo'],
-  ['Aggancio le frequenze', 'Misuro la frequenza esatta di ogni ronzio'],
+  ['Aggancio le frequenze', 'Misuro la frequenza esatta dei toni scelti'],
   ['Calibro la cassa', 'Un breve tono di prova per ogni ronzio'],
   ['Cancello', 'Passi grandi, poi sempre più piccoli']
 ];
@@ -1556,7 +1587,8 @@ function renderSteps() {
 }
 
 function headline() {
-  const act = st.channels.filter(c => c.enabled && c.S);
+  const enabled = st.channels.filter(c => c.enabled);
+  const act = enabled.filter(c => c.S);
   const locked = act.filter(c => c.state === 'locked').length;
   const allStable = st.autoOn && act.length > 0 && locked === act.length;
   if (allStable) {
@@ -1566,9 +1598,9 @@ function headline() {
       if (/^Cancellazione (avviata|automatica attiva)/.test(st.message || '')) st.message = '';
     }
   } else ui.stableSince = null;
-  if (st.guideText && st.guideStep == null) return [st.guideText.replace(/ \(\d+ s\)…$|…$/, ''), 'Resta in silenzio per qualche secondo.', allStable];
+  if (st.guideText && st.guideStep == null) return [st.guideText.replace(/ \(\d+ s\)…$|…$/, ''), 'Resta in silenzio per qualche secondo: cerco i picchi nello spettro senza avviare nulla.', allStable];
   if (st.guideText) {
-    const t = ['Mi preparo', 'Sto ascoltando lo spettro', 'Sto agganciando le frequenze esatte', 'Sto calibrando la cassa'][st.guideStep || 0];
+    const t = ['Mi preparo', 'Sto agganciando le frequenze scelte', 'Sto calibrando la cassa'][st.guideStep || 0];
     return [t, 'Lascia il microfono dove appoggi la testa e resta in silenzio. Poi la cancellazione parte da sola.', allStable];
   }
   if (calSeq) return ['Calibrazione in corso', 'Resta in silenzio per qualche secondo: la cassa emette un breve tono di prova.', allStable];
@@ -1582,8 +1614,10 @@ function headline() {
     return ['In regolazione', (locked ? locked + ' di ' + act.length + ' toni stabili. ' : '') + 'Si stabilizza in poche decine di secondi.', allStable];
   }
   if (st.outputOn && act.length) return ['Toni accesi a mano', 'La cancellazione automatica è spenta: i toni restano come li hai regolati.', allStable];
-  if (act.length) return ['Cancellazione ferma', 'I ronzi sono già calibrati: premi “Trova e cancella” per ripartire da capo, o riaccendi la cancellazione automatica nelle regolazioni avanzate.', allStable];
-  return ['Pronto a cercare i ronzi', 'Metti il microfono dove appoggi la testa e premi “Trova e cancella”.', allStable];
+  if (act.length && enabled.every(c => c.S)) return ['Cancellazione ferma', 'I toni scelti sono già calibrati: premi “Avvia cancellazione” per ripartire, oppure “Ricalibra tutti”.', allStable];
+  if (enabled.length) return ['Toni pronti da calibrare', enabled.length + (enabled.length === 1 ? ' tono selezionato' : ' toni selezionati') + ': premi “Calibra e cancella” per iniziare.', allStable];
+  if (st.peaks.length) return ['Scegli i toni dallo spettro', 'Spunta nello spettro solo i ronzi che vuoi cancellare, poi premi “Calibra e cancella”.', allStable];
+  return ['Pronto a cercare i ronzi', 'Metti il microfono dove appoggi la testa e premi “Cerca i toni”.', allStable];
 }
 
 function micText() {
@@ -1603,10 +1637,15 @@ function render() {
   setText($('headline'), h);
   setText($('sub'), sub);
   const running = st.autoOn && st.outputOn;
+  const enabled = st.channels.filter(c => c.enabled);
+  const allCal = enabled.length > 0 && enabled.every(c => c.S);
   $('nightBtn').hidden = !running;
-  $('guideBtn').className = running ? 'sec' : 'pri';
+  $('guideBtn').hidden = running;
+  $('guideBtn').className = 'pri';
   $('guideBtn').disabled = busy;
-  setText($('guideBtn'), st.guideText ? 'In corso…' : running || st.channels.some(c => c.S) ? 'Trova e cancella di nuovo' : 'Trova e cancella');
+  setText($('guideBtn'), st.guideText ? 'In corso…' : !enabled.length ? 'Cerca i toni' : allCal ? 'Avvia cancellazione' : 'Calibra e cancella');
+  $('scanTopBtn').hidden = !enabled.length && !running;
+  $('scanTopBtn').disabled = busy;
   $('stopBtn').hidden = !st.outputOn;
   $('stopBtn').disabled = busy;
   renderSteps();
@@ -1762,11 +1801,12 @@ function wireUI() {
     try {
       await ensureAudio();
       $('startOverlay').hidden = true;
-      if (!st.message) st.message = 'Audio pronto. Metti il microfono dove appoggi la testa e premi “Trova e cancella”.';
+      if (!st.message) st.message = 'Audio pronto. Metti il microfono dove appoggi la testa e premi «Cerca i toni».';
     } catch (e) { st.message = 'Impossibile avviare l\'audio: ' + e.message; }
     render();
   });
-  $('guideBtn').addEventListener('click', () => guided());
+  $('guideBtn').addEventListener('click', () => startSelected());
+  $('scanTopBtn').addEventListener('click', () => scanAndShow());
   $('nightBtn').addEventListener('click', () => setNight(true));
   $('nightExit').addEventListener('click', () => setNight(false));
   const stopAll = () => { setAuto(false); setOutput(false); st.message = 'Cancellazione ferma: i toni sono spenti.'; render(); };
@@ -1855,7 +1895,7 @@ render();
 drawSpectrum();
 
 // accesso per i test automatici
-window.__controfase = { st, simLog, sr: () => ctx && ctx.sampleRate, guided, setAuto, setOutput, openMic, closeMic, calibrate, addChannel, scan,
+window.__controfase = { st, simLog, sr: () => ctx && ctx.sampleRate, guided: startSelected, startSelected, scanAndShow, setAuto, setOutput, openMic, closeMic, calibrate, addChannel, scan,
   setNight, render, simPump: (i, on) => node && node.port.postMessage({ type: 'simPump', index: i, on }) };
 </script>
 </body>
